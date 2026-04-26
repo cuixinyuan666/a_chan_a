@@ -33,6 +33,26 @@ FRONTEND_STYLE = """\
       --chipFill: rgba(246,166,35,0.45);
       --chipBg: rgba(154,163,173,0.12);
       --chipEdge: rgba(246,166,35,0.8);
+      --inputBg: #ffffff;
+      --inputText: #101418;
+      --inputBorder: #9aa3ad;
+      --hoverBg: #dde4ec;
+      --hoverText: #23425f;
+      --toolboxBg: #edf1f6;
+      --toolBtnBg: #e3e8ef;
+      --accentTitle: #a16207;
+      --dangerText: #b91c1c;
+      --modalPanelBg: #f7f8fa;
+      --tipBg: rgba(15, 23, 42, 0.95);
+      --tipText: #f8fafc;
+      --overlayPanelBg: rgba(255, 255, 255, 0.95);
+      --overlayBorder: #d0d8e2;
+      --overlayTitle: #0f172a;
+      --overlaySubText: #64748b;
+      --overlayPlusBg: rgba(254, 242, 242, 0.95);
+      --overlayMinusBg: rgba(240, 253, 244, 0.95);
+      --settlementBtnBg: #2563eb;
+      --settlementBtnText: #ffffff;
     }
     [data-theme="dark"]{
       --bg: #050608;
@@ -67,6 +87,26 @@ FRONTEND_STYLE = """\
       --chipFill: rgba(240,165,58,0.65);
       --chipBg: rgba(61,35,10,0.25);
       --chipEdge: rgba(240,165,58,0.95);
+      --inputBg: #090c11;
+      --inputText: #d7dce2;
+      --inputBorder: #2b2f36;
+      --hoverBg: #1b1f25;
+      --hoverText: #f7c97e;
+      --toolboxBg: #090b0f;
+      --toolBtnBg: #11151a;
+      --accentTitle: #f1c979;
+      --dangerText: #f87171;
+      --modalPanelBg: #0e1013;
+      --tipBg: rgba(6, 8, 12, 0.96);
+      --tipText: #ffffff;
+      --overlayPanelBg: rgba(30, 41, 59, 0.95);
+      --overlayBorder: #334155;
+      --overlayTitle: #f1f5f9;
+      --overlaySubText: #94a3b8;
+      --overlayPlusBg: rgba(69, 10, 10, 0.95);
+      --overlayMinusBg: rgba(5, 46, 22, 0.95);
+      --settlementBtnBg: #3b82f6;
+      --settlementBtnText: #ffffff;
     }
     [data-theme="eye-care"]{
       --bg: #e8f0e8;
@@ -101,6 +141,26 @@ FRONTEND_STYLE = """\
       --chipFill: rgba(37,99,235,0.42);
       --chipBg: rgba(163,196,163,0.18);
       --chipEdge: rgba(37,99,235,0.72);
+      --inputBg: #f8fcf8;
+      --inputText: #1a2e1a;
+      --inputBorder: #a3c4a3;
+      --hoverBg: #d8e8d8;
+      --hoverText: #1f5134;
+      --toolboxBg: #eaf3ea;
+      --toolBtnBg: #dcefdc;
+      --accentTitle: #8f5f1d;
+      --dangerText: #9b1c1c;
+      --modalPanelBg: #f4faf4;
+      --tipBg: rgba(32, 51, 32, 0.94);
+      --tipText: #f4faf4;
+      --overlayPanelBg: rgba(244, 250, 244, 0.95);
+      --overlayBorder: #a3c4a3;
+      --overlayTitle: #1a2e1a;
+      --overlaySubText: #3d5a3d;
+      --overlayPlusBg: rgba(254, 242, 242, 0.9);
+      --overlayMinusBg: rgba(240, 253, 244, 0.9);
+      --settlementBtnBg: #2f855a;
+      --settlementBtnText: #ffffff;
     }
     body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei UI", Tahoma, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; letter-spacing: 0.01em; }
     .wrap { display: flex; height: 100vh; min-height: 0; flex-direction: row-reverse; }
@@ -132,16 +192,16 @@ FRONTEND_STYLE = """\
     .row { margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
     .row input[type="checkbox"] { width: auto; transform: scale(1.1); margin-left: 8px; }
     label { display: inline-block; width: 110px; font-size: 12px; }
-    input, select, textarea { flex: 1; padding: 4px 6px; background: #08090b; color: var(--text); border: 1px solid var(--border); min-width: 0; border-radius: 0; box-shadow: none; }
+    input, select, textarea { flex: 1; padding: 4px 6px; background: var(--inputBg); color: var(--inputText); border: 1px solid var(--inputBorder); min-width: 0; border-radius: 0; box-shadow: none; }
     
     .btnRow { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
     .btnRow button { width: 100%; margin: 0; padding: 8px; text-align: left; position: relative; }
     
     button { padding: 6px 10px; border: 1px solid var(--border); background: var(--btn); color: var(--btnText); cursor: pointer; border-radius: 0; box-shadow: none; transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
-    button:hover:not(:disabled) { border-color: #f0a53a; background: #1b1f25; color: #f7c97e; }
+    button:hover:not(:disabled) { border-color: #f0a53a; background: var(--hoverBg); color: var(--hoverText); }
     
-    .title { font-size: 14px; margin: 2px 0 8px; color: #f1c979; font-weight: 700; }
+    .title { font-size: 14px; margin: 2px 0 8px; color: var(--accentTitle); font-weight: 700; }
     .card { border: 1px solid var(--border); padding: 10px; margin-bottom: 10px; background: var(--panel); border-radius: 0; }
     .left.compact .title { margin-bottom: 8px; font-size: 15px; }
     .left.compact .sourceStatus { margin-bottom: 8px; font-size: 11px; }
@@ -186,8 +246,8 @@ FRONTEND_STYLE = """\
     }
     .tip-content {
       position: fixed;
-      background: rgba(6, 8, 12, 0.96);
-      color: white;
+      background: var(--tipBg);
+      color: var(--tipText);
       padding: 8px 12px;
       border-radius: 0;
       font-size: 12px;
@@ -218,7 +278,7 @@ FRONTEND_STYLE = """\
     }
     :fullscreen #chart { height: 100vh; }
     .fullscreen-btn {
-      background: rgba(19,23,29,0.92);
+      background: var(--toolBtnBg);
       border: 1px solid var(--border);
       border-radius: 0;
       padding: 4px 8px;
@@ -230,10 +290,10 @@ FRONTEND_STYLE = """\
       min-width: 140px;
       justify-content: center;
     }
-    .fullscreen-btn:hover { background: #1d232b; border-color: #f0a53a; }
+    .fullscreen-btn:hover { background: var(--hoverBg); border-color: #f0a53a; color: var(--hoverText); }
 
     .judge-bsp-btn {
-      background: rgba(19,23,29,0.92);
+      background: var(--toolBtnBg);
       border: 1px solid var(--border);
       border-radius: 0;
       padding: 4px 10px;
@@ -246,11 +306,11 @@ FRONTEND_STYLE = """\
       min-width: 124px;
       justify-content: center;
     }
-    .judge-bsp-btn:hover { background: #1d232b; border-color: #27d6dc; }
+    .judge-bsp-btn:hover { background: var(--hoverBg); border-color: #27d6dc; color: var(--hoverText); }
     .judge-bsp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
     .toolbox {
-      background: rgba(9,11,14,0.92);
+      background: var(--toolboxBg);
       border: 1px solid var(--border);
       border-radius: 0;
       padding: 8px;
@@ -274,7 +334,8 @@ FRONTEND_STYLE = """\
       width: auto;
       border-radius: 0;
       border: 1px solid var(--border);
-      background: #11151a;
+      background: var(--toolBtnBg);
+      color: var(--btnText);
       cursor: pointer;
       white-space: nowrap;
     }
@@ -454,17 +515,16 @@ FRONTEND_STYLE = """\
       width: 280px;
       min-width: 220px;
       min-height: 64px;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--overlayPanelBg);
       border-radius: 14px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
       padding: 0;
       z-index: 10002;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--overlayBorder);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       backdrop-filter: blur(8px);
       overflow: hidden;
     }
-    [data-theme="dark"] .tradeStatusOverlay { background: rgba(30, 41, 59, 0.95); border-color: #334155; }
     .tradeStatusTitleBar {
       display: flex;
       align-items: center;
@@ -480,7 +540,7 @@ FRONTEND_STYLE = """\
       font-weight: bold;
       font-size: 14px;
       letter-spacing: 0.5px;
-      color: #0f172a;
+      color: var(--overlayTitle);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -497,21 +557,21 @@ FRONTEND_STYLE = """\
       width: 24px;
       height: 24px;
       border-radius: 6px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      background: rgba(255,255,255,0.75);
-      color: var(--text);
+      border: 1px solid var(--border);
+      background: var(--btn);
+      color: var(--btnText);
       font-size: 12px;
       padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
-    .tradeStatusMiniBtn:hover { background: rgba(255,255,255,0.95); }
+    .tradeStatusMiniBtn:hover { background: var(--hoverBg); color: var(--hoverText); }
     .tradeStatusOverlay.dragging .tradeStatusTitle { opacity: 0.85; }
     .tradeStatusBody { padding: 12px 14px 16px; }
     .tradeStatusGrid { display: grid; grid-template-columns: 1fr; gap: 6px; }
     .tsItem { display: flex; justify-content: space-between; font-family: Consolas, monospace; }
-    .tsItem label { color: #64748b; font-size: 12px; }
+    .tsItem label { color: var(--overlaySubText); font-size: 12px; }
     .tsItem span { font-weight: bold; }
     .tradeStatusOverlay.minimized .tradeStatusBody { display: none; }
     .tradeStatusResizeHandle {
@@ -525,10 +585,8 @@ FRONTEND_STYLE = """\
     }
     .pnl-plus { color: #ef4444; }
     .pnl-minus { color: #22c55e; }
-    .overlay-plus { border-color: #ef4444; background: rgba(254, 242, 242, 0.95); }
-    .overlay-minus { border-color: #22c55e; background: rgba(240, 253, 244, 0.95); }
-    [data-theme="dark"] .overlay-plus { background: rgba(69, 10, 10, 0.95); }
-    [data-theme="dark"] .overlay-minus { background: rgba(5, 46, 22, 0.95); }
+    .overlay-plus { border-color: #ef4444; background: var(--overlayPlusBg); }
+    .overlay-minus { border-color: #22c55e; background: var(--overlayMinusBg); }
 
     /* 结算弹窗 */
     .settlementModal {
@@ -537,14 +595,13 @@ FRONTEND_STYLE = """\
     }
     .settlementModal.show { display: flex; }
     .settlementModal .panel {
-      width: 480px; background: white; border-radius: 12px; padding: 24px;
+      width: 480px; background: var(--modalPanelBg); color: var(--text); border-radius: 12px; padding: 24px;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
-    [data-theme="dark"] .settlementModal .panel { background: #1e293b; color: #f1f5f9; }
-    .settlementTitle { font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+    .settlementTitle { font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
     .settlementBody { font-family: Consolas, monospace; line-height: 1.8; font-size: 14px; margin-bottom: 20px; }
     .settlementActions { text-align: center; }
-    .settlementActions button { padding: 10px 40px; font-size: 16px; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 6px; }
+    .settlementActions button { padding: 10px 40px; font-size: 16px; cursor: pointer; background: var(--settlementBtnBg); color: var(--settlementBtnText); border: none; border-radius: 6px; }
 
     .settingsModal {
       position: fixed;
@@ -574,7 +631,7 @@ FRONTEND_STYLE = """\
       margin-bottom: 20px;
       padding-bottom: 10px;
       border-bottom: 2px solid var(--border);
-      color: #2563eb;
+      color: var(--accentTitle);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -631,7 +688,7 @@ FRONTEND_STYLE = """\
       z-index: 2;
       padding: 12px 0 4px;
       border-top: 1px solid var(--border);
-      background: linear-gradient(to bottom, rgba(255,255,255,0), var(--panel) 24%);
+      background: linear-gradient(to bottom, transparent, var(--panel) 24%);
     }
     .settingsActions button {
       min-width: 100px;

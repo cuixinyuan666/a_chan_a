@@ -319,6 +319,42 @@ function migrateChartConfig(cfg) {
 
 let savedChartConfig = ensureObject(safeJsonParse(storageGet("chan_chart_config"), {}), {});
 let chartConfig = deepMerge(JSON.parse(JSON.stringify(DEFAULT_CHART_CONFIG)), migrateChartConfig(savedChartConfig));
+const THEME_MODE_VALUES = new Set(["light", "dark", "eye-care", "system"]);
+let systemThemeMediaQuery = null;
+let systemThemeListenerBound = false;
+let systemThemeChangeHandler = null;
+
+function normalizeThemeMode(themeMode) {
+  const mode = String(themeMode || "").trim();
+  return THEME_MODE_VALUES.has(mode) ? mode : "dark";
+}
+
+function getResolvedTheme(themeMode) {
+  const mode = normalizeThemeMode(themeMode);
+  if (mode === "system") {
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return "dark";
+  }
+  return mode;
+}
+
+function ensureSystemThemeListener() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function" || systemThemeListenerBound) return;
+  systemThemeMediaQuery = systemThemeMediaQuery || window.matchMedia("(prefers-color-scheme: dark)");
+  systemThemeChangeHandler = () => {
+    if (normalizeThemeMode(chartConfig.theme) !== "system") return;
+    applyThemeFromSelect();
+  };
+  if (typeof systemThemeMediaQuery.addEventListener === "function") {
+    systemThemeMediaQuery.addEventListener("change", systemThemeChangeHandler);
+  } else if (typeof systemThemeMediaQuery.addListener === "function") {
+    systemThemeMediaQuery.addListener(systemThemeChangeHandler);
+  }
+  systemThemeListenerBound = true;
+}
+chartConfig.theme = normalizeThemeMode(chartConfig.theme);
 
 const DEFAULT_SESSION_CONFIG = {
   code: "600340",
@@ -746,7 +782,7 @@ function loadSessionConfig() {
   if (sessionConfig.cash !== undefined) $("cash").value = sessionConfig.cash;
   if (sessionConfig.autype !== undefined) $("autype").value = sessionConfig.autype;
   if (sessionConfig.theme !== undefined) {
-    chartConfig.theme = sessionConfig.theme;
+    chartConfig.theme = normalizeThemeMode(sessionConfig.theme);
     applyThemeFromSelect();
   }
   // No longer setting DOM for chip/biZs/segZs here as they are in chartConfig
@@ -1170,7 +1206,8 @@ function renderSettingsForm() {
         { label: "主题", subKey: "theme", type: "select", options: [
           { value: "light", label: "白色" },
           { value: "dark", label: "黑色" },
-          { value: "eye-care", label: "护眼" }
+          { value: "eye-care", label: "护眼" },
+          { value: "system", label: "跟随系统" }
         ]}
       ]
     },
@@ -1958,7 +1995,7 @@ function saveSettings() {
     }
     
     if (key === "theme_section") {
-      chartConfig.theme = val;
+      chartConfig.theme = normalizeThemeMode(val);
       applyThemeFromSelect();
     } else if (key === "indicators") {
       if (subkey === "mainSlot") {
@@ -2321,8 +2358,12 @@ function syncIndicatorControls() {
 }
 
 function applyThemeFromSelect() {
-  const t = chartConfig.theme || "light";
-  document.documentElement.setAttribute("data-theme", t);
+  chartConfig.theme = normalizeThemeMode(chartConfig.theme);
+  const themeMode = chartConfig.theme;
+  const resolvedTheme = getResolvedTheme(themeMode);
+  document.documentElement.setAttribute("data-theme-mode", themeMode);
+  document.documentElement.setAttribute("data-theme", resolvedTheme);
+  if (themeMode === "system") ensureSystemThemeListener();
   if (lastPayload && lastPayload.ready && lastPayload.chart) draw(lastPayload.chart);
 }
 
@@ -4349,8 +4390,8 @@ function drawIndicators(chart, s) {
   const visibleInd = s.visibleInd || [];
   if (visibleInd.length === 0) return;
   
-  const theme = document.documentElement.getAttribute("data-theme") || "light";
-  const lineMain = theme === "light" ? "#1e293b" : "#f8fafc";
+  const theme = document.documentElement.getAttribute("data-theme") || getResolvedTheme(chartConfig.theme);
+  const lineMain = theme === "dark" ? "#f8fafc" : "#1e293b";
   const mainTypeSet = new Set((s.mainTypes || []).map((m) => m.type));
 
   const drawPanelLine = (arr, getter, yFn, color) => {
