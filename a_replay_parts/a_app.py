@@ -227,7 +227,7 @@ def api_rld_init(req: RldInitReq):
     try:
         RLD_APP_STATE.init(req)
         payload = RLD_APP_STATE.build_payload()
-        payload["message"] = f"融立得工作台已加载：{payload.get('name') or payload.get('code')}"
+        payload["message"] = f"融立德工作台已加载：{payload.get('name') or payload.get('code')}"
         return payload
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -243,7 +243,7 @@ def api_rld_reconfig(req: RldReconfigReq):
     try:
         RLD_APP_STATE.reconfig(req)
         payload = RLD_APP_STATE.build_payload()
-        payload["message"] = "融立得工作台配置已更新"
+        payload["message"] = "融立德工作台配置已更新"
         return payload
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -277,7 +277,7 @@ def api_rld_backtest(req: RldBacktestReq):
 def api_rld_reset():
     RLD_APP_STATE.reset()
     payload = RLD_APP_STATE.build_payload()
-    payload["message"] = "融立得工作台已重置"
+    payload["message"] = "融立德工作台已重置"
     return payload
 
 
@@ -297,7 +297,7 @@ def api_rld_train_state():
     try:
         return RLD_TRAIN_APP_STATE.build_payload()
     except Exception:
-        return {"ready": False, "message": "请先加载融立得缠论训练"}
+        return {"ready": False, "message": "请先加载融立德缠论训练"}
 
 
 @app.post("/api/rld-train/reset")

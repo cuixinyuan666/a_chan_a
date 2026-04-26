@@ -111,7 +111,7 @@ EXTRA_SOURCE_LEVELS: dict[Any, set[KL_TYPE]] = {
 DEFAULT_SHARED_SETTINGS = {
     "data_quality": "network_direct",
     "cycle_form": "standard",
-    "chip_data_quality": "kline_estimate",
+    "chip_data_quality": "offline_tick",
     "offline_kline_path": "",
     "offline_tick_path": "",
 }
@@ -870,6 +870,74 @@ def resolve_offline_tick_paths(code: str, begin_date: Optional[str], end_date: O
                 continue
         filtered.append(path)
     return filtered
+
+
+def summarize_chip_distribution(
+    buckets: list[dict[str, Any]],
+    *,
+    current_price: Optional[float] = None,
+) -> dict[str, Any]:
+    rows = []
+    for item in buckets or []:
+        price = safe_float(item.get("price"), float("nan"))
+        volume = safe_float(item.get("volume"), 0.0)
+        if not math.isfinite(price) or volume <= 0:
+            continue
+        rows.append({"price": round(price, 4), "volume": float(volume)})
+    rows.sort(key=lambda item: item["price"])
+    empty_band = {"low": None, "high": None}
+    if not rows:
+        return {
+            "bucket_count": 0,
+            "total_volume": 0.0,
+            "peak_price": None,
+            "avg_cost": None,
+            "benefit_ratio": None,
+            "band70": dict(empty_band),
+            "band90": dict(empty_band),
+        }
+
+    total_volume = sum(item["volume"] for item in rows)
+    avg_cost = sum(item["price"] * item["volume"] for item in rows) / total_volume
+    peak_price = max(rows, key=lambda item: (item["volume"], -item["price"]))["price"]
+
+    def tightest_band(target_ratio: float) -> dict[str, Optional[float]]:
+        target_volume = max(0.0, float(target_ratio)) * total_volume
+        if target_volume <= 0:
+            return dict(empty_band)
+        best: Optional[tuple[float, int, int]] = None
+        left = 0
+        acc_volume = 0.0
+        for right, row in enumerate(rows):
+            acc_volume += row["volume"]
+            while left <= right and acc_volume - rows[left]["volume"] >= target_volume:
+                acc_volume -= rows[left]["volume"]
+                left += 1
+            if acc_volume < target_volume:
+                continue
+            width = rows[right]["price"] - rows[left]["price"]
+            score = (round(width, 8), left, right)
+            if best is None or score < best:
+                best = score
+        if best is None:
+            return {"low": rows[0]["price"], "high": rows[-1]["price"]}
+        _, best_left, best_right = best
+        return {"low": rows[best_left]["price"], "high": rows[best_right]["price"]}
+
+    benefit_ratio = None
+    if current_price is not None and math.isfinite(float(current_price)):
+        winning_volume = sum(item["volume"] for item in rows if item["price"] <= float(current_price))
+        benefit_ratio = winning_volume / total_volume if total_volume > 0 else None
+
+    return {
+        "bucket_count": len(rows),
+        "total_volume": round(total_volume, 4),
+        "peak_price": round(peak_price, 4),
+        "avg_cost": round(avg_cost, 4),
+        "benefit_ratio": round(benefit_ratio, 4) if benefit_ratio is not None else None,
+        "band70": tightest_band(0.7),
+        "band90": tightest_band(0.9),
+    }
 
 
 def parse_offline_tick_file(path: Path) -> list[dict[str, Any]]:

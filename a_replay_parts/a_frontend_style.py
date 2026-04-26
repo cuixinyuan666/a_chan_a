@@ -1,72 +1,72 @@
 FRONTEND_STYLE = """\
 
     :root, [data-theme="light"]{
-      --bg: #f7f7f8;
-      --panel: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --border: #cbd5e1;
-      --btn: #f1f5f9;
-      --btnText: #0f172a;
+      --bg: #e7eaee;
+      --panel: #f7f8fa;
+      --text: #101418;
+      --muted: #5f6975;
+      --border: #9aa3ad;
+      --btn: #eceff2;
+      --btnText: #111827;
       --chartBg: #ffffff;
-      --grid: #e2e8f0;
-      --candleUp: #ef4444;
-      --candleDown: #22c55e;
-      --candleUpFill: rgba(239,68,68,0.12);
-      --candleDownFill: rgba(34,197,94,0.75);
-      --lineFx: #06b6d4;
-      --lineBi: #f59e0b;
-      --lineBiWeak: #94a3b8;
-      --lineSeg: #059669;
-      --lineSegWeak: #34d399;
-      --holdFill: rgba(59,130,246,0.14);
-      --holdFillPast: rgba(99,102,241,0.12);
-      --markBuy: #dc2626;
-      --markSell: #16a34a;
-      --rayBuy: #f97316;
-      --raySell: #14b8a6;
-      --bspBuy: #dc2626;
-      --bspSell: #16a34a;
+      --grid: #d4d8de;
+      --candleUp: #ff3b30;
+      --candleDown: #27d6dc;
+      --candleUpFill: rgba(255,59,48,0.12);
+      --candleDownFill: rgba(39,214,220,0.55);
+      --lineFx: #8ab4f8;
+      --lineBi: #ffb347;
+      --lineBiWeak: #8694a6;
+      --lineSeg: #4fd18a;
+      --lineSegWeak: #8ae6bb;
+      --holdFill: rgba(51,122,255,0.14);
+      --holdFillPast: rgba(71,95,199,0.12);
+      --markBuy: #ff5e57;
+      --markSell: #27d6dc;
+      --rayBuy: #f6a623;
+      --raySell: #27d6dc;
+      --bspBuy: #ff5e57;
+      --bspSell: #27d6dc;
       --legendBg: rgba(255,255,255,0.92);
       --legendText: #0f172a;
-      --legendBorder: rgba(148,163,184,0.6);
-      --chipFill: rgba(59,130,246,0.45);
-      --chipBg: rgba(148,163,184,0.12);
-      --chipEdge: rgba(59,130,246,0.75);
+      --legendBorder: rgba(154,163,173,0.8);
+      --chipFill: rgba(246,166,35,0.45);
+      --chipBg: rgba(154,163,173,0.12);
+      --chipEdge: rgba(246,166,35,0.8);
     }
     [data-theme="dark"]{
-      --bg: #0b0f14;
-      --panel: #0b0f14;
-      --text: #e6edf3;
-      --muted: #9ca3af;
-      --border: #334155;
-      --btn: #1e293b;
-      --btnText: #e6edf3;
-      --chartBg: #0b0f14;
-      --grid: #334155;
-      --candleUp: #f87171;
-      --candleDown: #4ade80;
-      --candleUpFill: rgba(248,113,113,0.15);
-      --candleDownFill: rgba(74,222,128,0.45);
-      --lineFx: #22d3ee;
-      --lineBi: #fbbf24;
-      --lineBiWeak: #94a3b8;
-      --lineSeg: #34d399;
-      --lineSegWeak: #6ee7b7;
-      --holdFill: rgba(59,130,246,0.18);
-      --holdFillPast: rgba(129,140,248,0.16);
-      --markBuy: #f87171;
-      --markSell: #4ade80;
-      --rayBuy: #fb923c;
-      --raySell: #2dd4bf;
-      --bspBuy: #fca5a5;
-      --bspSell: #86efac;
-      --legendBg: rgba(15,23,42,0.88);
-      --legendText: #e2e8f0;
-      --legendBorder: rgba(71,85,105,0.8);
-      --chipFill: rgba(96,165,250,0.5);
-      --chipBg: rgba(148,163,184,0.16);
-      --chipEdge: rgba(147,197,253,0.8);
+      --bg: #050608;
+      --panel: #0e1013;
+      --text: #d7dce2;
+      --muted: #8f98a4;
+      --border: #2b2f36;
+      --btn: #13171d;
+      --btnText: #d7dce2;
+      --chartBg: #000000;
+      --grid: #2b1212;
+      --candleUp: #ff3b30;
+      --candleDown: #27d6dc;
+      --candleUpFill: rgba(255,59,48,0.18);
+      --candleDownFill: rgba(39,214,220,0.55);
+      --lineFx: #8db6ff;
+      --lineBi: #f0a53a;
+      --lineBiWeak: #7a8797;
+      --lineSeg: #58cb83;
+      --lineSegWeak: #8ce4ad;
+      --holdFill: rgba(23,41,84,0.28);
+      --holdFillPast: rgba(54,72,126,0.22);
+      --markBuy: #ff615c;
+      --markSell: #27d6dc;
+      --rayBuy: #f0a53a;
+      --raySell: #27d6dc;
+      --bspBuy: #ff615c;
+      --bspSell: #27d6dc;
+      --legendBg: rgba(8,10,12,0.94);
+      --legendText: #d7dce2;
+      --legendBorder: rgba(58,63,70,0.9);
+      --chipFill: rgba(240,165,58,0.65);
+      --chipBg: rgba(61,35,10,0.25);
+      --chipEdge: rgba(240,165,58,0.95);
     }
     [data-theme="eye-care"]{
       --bg: #e8f0e8;
@@ -102,9 +102,9 @@ FRONTEND_STYLE = """\
       --chipBg: rgba(163,196,163,0.18);
       --chipEdge: rgba(37,99,235,0.72);
     }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+    body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei UI", Tahoma, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; letter-spacing: 0.01em; }
     .wrap { display: flex; height: 100vh; min-height: 0; flex-direction: row-reverse; }
-    .left { width: clamp(280px, 28vw, 380px); min-width: 280px; max-width: 420px; padding: 12px; border-right: none; border-left: 1px solid var(--border); box-sizing: border-box; overflow: auto; background: var(--panel); position: relative; overscroll-behavior: contain; }
+    .left { width: clamp(300px, 24vw, 360px); min-width: 300px; max-width: 380px; padding: 10px; border-right: none; border-left: 1px solid var(--border); box-sizing: border-box; overflow: auto; background: var(--panel); position: relative; overscroll-behavior: contain; }
     .leftContent {
       display: flex;
       flex-direction: column;
@@ -127,22 +127,22 @@ FRONTEND_STYLE = """\
       z-index: 10;
       transition: background 0.2s;
     }
-    .resizer:hover { background: #2563eb; }
+    .resizer:hover { background: #f0a53a; }
     .right { flex: 1; padding: 0; box-sizing: border-box; min-width: 0; position: relative; display: flex; }
     .row { margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
     .row input[type="checkbox"] { width: auto; transform: scale(1.1); margin-left: 8px; }
-    label { display: inline-block; width: 110px; font-size: 14px; }
-    input, select { flex: 1; padding: 4px; background: var(--panel); color: var(--text); border: 1px solid var(--border); min-width: 0; }
+    label { display: inline-block; width: 110px; font-size: 12px; }
+    input, select, textarea { flex: 1; padding: 4px 6px; background: #08090b; color: var(--text); border: 1px solid var(--border); min-width: 0; border-radius: 0; box-shadow: none; }
     
     .btnRow { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
     .btnRow button { width: 100%; margin: 0; padding: 8px; text-align: left; position: relative; }
     
-    button { padding: 6px 10px; border: 1px solid var(--border); background: var(--btn); color: var(--btnText); cursor: pointer; border-radius: 4px; }
+    button { padding: 6px 10px; border: 1px solid var(--border); background: var(--btn); color: var(--btnText); cursor: pointer; border-radius: 0; box-shadow: none; transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
-    button:hover:not(:disabled) { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+    button:hover:not(:disabled) { border-color: #f0a53a; background: #1b1f25; color: #f7c97e; }
     
-    .title { font-size: 16px; margin: 4px 0 10px; color: #2563eb; font-weight: bold; }
-    .card { border: 1px solid var(--border); padding: 12px; margin-bottom: 12px; background: var(--panel); border-radius: 8px; }
+    .title { font-size: 14px; margin: 2px 0 8px; color: #f1c979; font-weight: 700; }
+    .card { border: 1px solid var(--border); padding: 10px; margin-bottom: 10px; background: var(--panel); border-radius: 0; }
     .left.compact .title { margin-bottom: 8px; font-size: 15px; }
     .left.compact .sourceStatus { margin-bottom: 8px; font-size: 11px; }
     .left.compact .chartToolsPanel,
@@ -170,9 +170,9 @@ FRONTEND_STYLE = """\
       justify-content: center;
       width: 16px;
       height: 16px;
-      background: #2563eb;
+      background: #f0a53a;
       color: white;
-      border-radius: 50%;
+      border-radius: 0;
       font-size: 11px;
       font-weight: bold;
       margin-left: 6px;
@@ -186,10 +186,10 @@ FRONTEND_STYLE = """\
     }
     .tip-content {
       position: fixed;
-      background: #1e293b;
+      background: rgba(6, 8, 12, 0.96);
       color: white;
       padding: 8px 12px;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 12px;
       white-space: pre-wrap;
       z-index: 30000;
@@ -206,7 +206,7 @@ FRONTEND_STYLE = """\
     .chartToolsPanel {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 0;
       background: var(--panel);
       padding: 12px;
       box-sizing: border-box;
@@ -218,9 +218,9 @@ FRONTEND_STYLE = """\
     }
     :fullscreen #chart { height: 100vh; }
     .fullscreen-btn {
-      background: rgba(255,255,255,0.8);
+      background: rgba(19,23,29,0.92);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 0;
       padding: 4px 8px;
       cursor: pointer;
       display: flex;
@@ -230,12 +230,12 @@ FRONTEND_STYLE = """\
       min-width: 140px;
       justify-content: center;
     }
-    .fullscreen-btn:hover { background: #fff; border-color: #2563eb; }
+    .fullscreen-btn:hover { background: #1d232b; border-color: #f0a53a; }
 
     .judge-bsp-btn {
-      background: rgba(255,255,255,0.88);
+      background: rgba(19,23,29,0.92);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 0;
       padding: 4px 10px;
       cursor: pointer;
       display: none;
@@ -246,13 +246,13 @@ FRONTEND_STYLE = """\
       min-width: 124px;
       justify-content: center;
     }
-    .judge-bsp-btn:hover { background: #fff; border-color: #16a34a; }
+    .judge-bsp-btn:hover { background: #1d232b; border-color: #27d6dc; }
     .judge-bsp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
     .toolbox {
-      background: rgba(255,255,255,0.92);
+      background: rgba(9,11,14,0.92);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 0;
       padding: 8px;
       display: flex;
       flex: 1 1 460px;
@@ -272,15 +272,15 @@ FRONTEND_STYLE = """\
       padding: 4px 8px;
       font-size: 12px;
       width: auto;
-      border-radius: 6px;
+      border-radius: 0;
       border: 1px solid var(--border);
-      background: #fff;
+      background: #11151a;
       cursor: pointer;
       white-space: nowrap;
     }
     .toolbox button.active {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+      border-color: #f0a53a;
+      box-shadow: inset 0 0 0 1px rgba(240, 165, 58, 0.35);
     }
 
     /* Toast 弹窗 */
@@ -301,7 +301,7 @@ FRONTEND_STYLE = """\
       background: var(--legendBg);
       color: var(--legendText);
       border: 1px solid var(--legendBorder);
-      border-radius: 8px;
+      border-radius: 0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       font-family: Consolas, monospace;
       animation: toastFadeIn 0.3s forwards;

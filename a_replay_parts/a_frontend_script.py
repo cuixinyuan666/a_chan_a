@@ -177,7 +177,7 @@ const DEFAULT_CHAN_CONFIG = {
 };
 
 const DEFAULT_CHART_CONFIG = {
-  theme: "light",
+  theme: "dark",
   crosshair: { width: 5, color: "#000000", fontSize: 16 },
   fx: { width: 1.1, color: "#06b6d4", dashed: true },
   fract: { widthSure: 2.2, widthUnsure: 1.6, color: "#d97706" },
@@ -188,7 +188,7 @@ const DEFAULT_CHART_CONFIG = {
   biZs: { width: 1.8, color: "#f59e0b", enabled: true },
   segZs: { width: 2.4, color: "#059669", enabled: true },
   segsegZs: { width: 2.8, color: "#2563eb", enabled: true },
-  candle: { width: 1.4, upColor: "#ef4444", downColor: "#22c55e" },
+  candle: { width: 1.4, upColor: "#ff3b30", downColor: "#27d6dc" },
   bspBi: { fontSize: 14, lineColor: "#94a3b8", lineWidth: 1, lineStyle: "dashed", lineDash: [5, 4] },
   bspSeg: { fontSize: 14, lineColor: "#64748b", lineWidth: 1.1, lineStyle: "dashed", lineDash: [5, 4] },
   bspSegseg: { fontSize: 14, lineColor: "#475569", lineWidth: 1.2, lineStyle: "dashed", lineDash: [5, 4] },
@@ -326,7 +326,7 @@ const DEFAULT_SESSION_CONFIG = {
   end: "",
   cash: "10000",
   autype: "qfq",
-  theme: "light",
+  theme: "dark",
   chipEnabled: true,
   chipStretchLevel: "5",
   chipBucketStep: "0.1",
@@ -5359,12 +5359,12 @@ function buildSettingsHubMarkup() {
     <div class="settingsHubPage">
       <div class="settingsHubHero">
         <div class="settingsHubHeroTitle">设置中心</div>
-        <div class="settingsHubHeroText">通用设置、复盘参数、融立得参数统一在这里维护。父标签页仅保留必要操作按钮，缩放时优先保证图表与信息展示。</div>
+        <div class="settingsHubHeroText">通用设置、复盘参数、融立德参数统一在这里维护。父标签页仅保留必要操作按钮，缩放时优先保证图表与信息展示。</div>
       </div>
       <div class="settingsHubTabs">
         <button id="settingsHubTabShared" class="settingsHubTab active" type="button" data-settings-tab="shared">共享</button>
         <button id="settingsHubTabTrainer" class="settingsHubTab" type="button" data-settings-tab="trainer">复盘</button>
-        <button id="settingsHubTabRld" class="settingsHubTab" type="button" data-settings-tab="rld">融立得</button>
+        <button id="settingsHubTabRld" class="settingsHubTab" type="button" data-settings-tab="rld">融立德</button>
       </div>
       <div id="settingsPanelShared" class="settingsHubPanel active">
         <section class="settingsHubCard">
@@ -5374,7 +5374,7 @@ function buildSettingsHubMarkup() {
         <section class="settingsHubCard">
           <div class="settingsHubHead">说明</div>
           <div class="settingsHubHint">
-            复盘与融立得共用缩放、全屏、画线、缠论配置、图表显示设置、系统配置与快捷键逻辑。
+            复盘与融立德共用缩放、全屏、画线、缠论配置、图表显示设置、系统配置与快捷键逻辑。
           </div>
         </section>
       </div>
@@ -5386,7 +5386,7 @@ function buildSettingsHubMarkup() {
       </div>
       <div id="settingsPanelRld" class="settingsHubPanel">
         <section class="settingsHubCard">
-          <div class="settingsHubHead">融立得参数</div>
+          <div class="settingsHubHead">融立德参数</div>
           <div id="settingsRldMount"></div>
         </section>
       </div>
@@ -5479,7 +5479,7 @@ function rldMountSettingsHub() {
     sourceBlock.className = "settingsHubInner";
     sourceBlock.innerHTML = `
       <div class="settingsHubSectionTitle">数据源优先级</div>
-      <div class="settingsHubHint">拖拽排序后会同时作用于复盘与融立得。默认优先级为 BaoStock，其次 AKShare、Tushare、OfflineTXT。</div>
+      <div class="settingsHubHint">拖拽排序后会同时作用于复盘与融立德。默认优先级为 BaoStock，其次 AKShare、Tushare、OfflineTXT。</div>
       <div id="dataSourcePriorityList" class="sourcePriorityList"></div>
       <div id="dataSourcePriorityNote" class="settingsHubHint" style="margin-top:8px;"></div>
     `;
@@ -6164,7 +6164,7 @@ function rldWorkbenchMarkup() {
       <div class="rldPanel">
         <div class="rldHeaderBar">
           <div>
-            <div class="rldHeaderText">融立得多周期工作台</div>
+            <div class="rldHeaderText">融立德多周期工作台</div>
             <div id="rldHeaderSub" class="rldHeaderSub">尚未加载数据</div>
           </div>
           <div id="rldHeaderBadge" class="rldBadge">空闲</div>
@@ -6221,7 +6221,7 @@ function rldEnsureShell() {
   tabBar.className = "topTabBar";
   tabBar.innerHTML = `
     <button id="topTabTrainer" class="tabButton active" type="button">复盘</button>
-    <button id="topTabRld" class="tabButton" type="button">融立得</button>
+    <button id="topTabRld" class="tabButton" type="button">融立德</button>
     <button id="topTabSettings" class="tabButton" type="button">设置</button>
   `;
   const shell = document.createElement("div");
@@ -6328,7 +6328,7 @@ function rldGetSelectedRules(name) {
   return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((node) => node.value);
 }
 
-async function rldCall(path, body, method = "POST", loadingText = "融立得工作台处理中...") {
+async function rldCall(path, body, method = "POST", loadingText = "融立德工作台处理中...") {
   setGlobalLoading(true, loadingText);
   try {
     return await api(path, body, method);
@@ -6357,7 +6357,7 @@ function rldRenderSummary(payload) {
   const grid = $("rldSummaryGrid");
   if (!grid) return;
   if (!payload || !payload.ready || !payload.analysis) {
-    grid.innerHTML = `<div class="rldSummaryCard"><div class="k">状态</div><div class="v">未加载</div><div class="d">请先加载融立得工作台。</div></div>`;
+    grid.innerHTML = `<div class="rldSummaryCard"><div class="k">状态</div><div class="v">未加载</div><div class="d">请先加载融立德工作台。</div></div>`;
     return;
   }
   const agg = payload.analysis.aggregate || {};
@@ -6393,7 +6393,7 @@ function rldRenderStatus(payload, fallbackText) {
     return;
   }
   if (!payload || !payload.ready) {
-    rldSetStatus("请先加载融立得工作台。");
+    rldSetStatus("请先加载融立德工作台。");
     return;
   }
   const logs = payload.data_source && payload.data_source.logs ? payload.data_source.logs : [];
@@ -6859,7 +6859,7 @@ function rldBindUi() {
   bindBtn("rldBtnInit", async () => {
     try {
       const body = rldCollectForm();
-      const payload = await rldCall("/api/rld/init", body, "POST", "正在加载融立得工作台...");
+      const payload = await rldCall("/api/rld/init", body, "POST", "正在加载融立德工作台...");
       storageSet(rldStorageKey("lv1"), body.lv_list[0] || "day");
       storageSet(rldStorageKey("lv2"), body.lv_list[1] || "60m");
       storageSet(rldStorageKey("lv3"), body.lv_list[2] || "15m");
@@ -6879,7 +6879,7 @@ function rldBindUi() {
         strategy_config: form.strategy_config,
         watchlist_or_sector: form.watchlist_or_sector,
         lv_list: form.lv_list,
-      }, "POST", "正在应用融立得配置...");
+      }, "POST", "正在应用融立德配置...");
       rldSaveForm();
       rldRefresh(payload, payload.message || "配置已更新");
     } catch (e) {
@@ -6916,7 +6916,7 @@ function rldBindUi() {
   });
   bindBtn("rldBtnReset", async () => {
     try {
-      const payload = await rldCall("/api/rld/reset", {}, "POST", "正在重置融立得工作台...");
+      const payload = await rldCall("/api/rld/reset", {}, "POST", "正在重置融立德工作台...");
       rldPayload = null;
       rldCrosshairTime = null;
       rldRefresh(payload, payload.message || "已重置");
@@ -6942,7 +6942,7 @@ async function rldRestoreState() {
   try {
     const payload = await api("/api/rld/state", null, "GET");
     if (payload && payload.ready) {
-      rldRefresh(payload, "已恢复融立得工作台会话。");
+      rldRefresh(payload, "已恢复融立德工作台会话。");
     } else {
       rldRenderSummary(null);
       rldRenderLevelMatrix(null);
@@ -6950,7 +6950,7 @@ async function rldRestoreState() {
       rldRenderPerspective();
     }
   } catch (e) {
-    console.warn("恢复融立得工作台失败:", e);
+    console.warn("恢复融立德工作台失败:", e);
   }
 }
 

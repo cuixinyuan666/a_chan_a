@@ -15,6 +15,7 @@ from .a_data_extra import (
     klu_items_to_rows,
     merge_price_rows,
     rows_to_klu_items,
+    summarize_chip_distribution,
 )
 from .a_rld_backend import *
 from KLine.KLine_Unit import CKLine_Unit
@@ -251,7 +252,7 @@ def resolve_boundary_index(groups: list[TrainGroup], current_raw_index: int, ste
 
 def build_chip_profile_from_bars(rows: list[dict[str, Any]], *, bucket_step: float) -> dict[str, Any]:
     if not rows:
-        return {"available": False, "source": "KLineChip", "buckets": []}
+        return {"available": False, "source": "KLineChip", "buckets": [], "summary": summarize_chip_distribution([], current_price=None)}
     hist: dict[float, float] = {}
     step = max(0.001, float(bucket_step))
     for row in rows:
@@ -260,10 +261,16 @@ def build_chip_profile_from_bars(rows: list[dict[str, Any]], *, bucket_step: flo
         bucket = round(round(price / step) * step, 4)
         hist[bucket] = hist.get(bucket, 0.0) + max(volume, 1.0)
     buckets = [{"price": price, "volume": round(volume, 4)} for price, volume in sorted(hist.items())]
-    return {"available": True, "source": "KLineChip", "buckets": buckets}
+    current_price = float(rows[-1].get(DATA_FIELD.FIELD_CLOSE, 0.0) or 0.0) if rows else None
+    return {
+        "available": True,
+        "source": "KLineChip",
+        "buckets": buckets,
+        "summary": summarize_chip_distribution(buckets, current_price=current_price),
+    }
 
 
-def build_chip_profile_from_ticks(rows: list[dict[str, Any]], *, current_dt, bucket_step: float, source_label: str) -> dict[str, Any]:
+def build_chip_profile_from_ticks(rows: list[dict[str, Any]], *, current_dt, current_price: Optional[float], bucket_step: float, source_label: str) -> dict[str, Any]:
     step = max(0.001, float(bucket_step))
     hist: dict[float, float] = {}
     for item in rows:
@@ -275,9 +282,14 @@ def build_chip_profile_from_ticks(rows: list[dict[str, Any]], *, current_dt, buc
         bucket = round(round(price / step) * step, 4)
         hist[bucket] = hist.get(bucket, 0.0) + max(volume, 1.0)
     if not hist:
-        return {"available": False, "source": source_label, "buckets": []}
+        return {"available": False, "source": source_label, "buckets": [], "summary": summarize_chip_distribution([], current_price=current_price)}
     buckets = [{"price": price, "volume": round(volume, 4)} for price, volume in sorted(hist.items())]
-    return {"available": True, "source": source_label, "buckets": buckets}
+    return {
+        "available": True,
+        "source": source_label,
+        "buckets": buckets,
+        "summary": summarize_chip_distribution(buckets, current_price=current_price),
+    }
 
 
 def build_single_level_payload(
@@ -294,7 +306,7 @@ def build_single_level_payload(
             "level": kl_type_to_name(spec.base_lv),
             "chart": {"kline": [], "fract": [], "bi": [], "seg": [], "segseg": [], "fract_zs": [], "bi_zs": [], "seg_zs": [], "segseg_zs": [], "bsp": [], "trend_lines": [], "indicators": []},
             "summary": {"trend_sign": 0, "trend_label": "震荡", "zs_state": {"label": "无数据", "kind": "无", "low": None, "high": None, "bias": 0}, "latest_bsp": None, "macd_bi_area": None, "macd_seg_area": None, "macd_bias": 0.0, "chdl_score": 0.0, "divergence_bias": 0, "reasons": ["当前周期无可见数据"]},
-            "chip": {"available": False, "source": "None", "buckets": []},
+            "chip": {"available": False, "source": "None", "buckets": [], "summary": summarize_chip_distribution([], current_price=None)},
         }
     items = rows_to_klu_items(visible_rows, spec.base_lv)
     cfg = CChanConfig(strip_chan_algo(effective_cfg_dict))
@@ -318,17 +330,30 @@ def build_single_level_payload(
     shared = get_shared_settings()
     bucket_step = 0.05
     chip_mode = str(shared.get("chip_data_quality") or "kline_estimate").strip().lower()
+    last_bar = chart["kline"][-1] if chart["kline"] else None
+    current_price = float(last_bar["c"]) if last_bar else None
     chip_payload: dict[str, Any]
     current_dt = session.raw_rows[current_raw_index]["dt"]
     if chip_mode == "network_tick":
         tick_rows, source_label = session.tick_cache or ([], "ADataTick")
-        chip_payload = build_chip_profile_from_ticks(tick_rows, current_dt=current_dt, bucket_step=bucket_step, source_label=source_label)
+        chip_payload = build_chip_profile_from_ticks(
+            tick_rows,
+            current_dt=current_dt,
+            current_price=current_price,
+            bucket_step=bucket_step,
+            source_label=source_label,
+        )
     elif chip_mode == "offline_tick":
         tick_rows, source_label = session.tick_cache or ([], "OfflineTick")
-        chip_payload = build_chip_profile_from_ticks(tick_rows, current_dt=current_dt, bucket_step=bucket_step, source_label=source_label)
+        chip_payload = build_chip_profile_from_ticks(
+            tick_rows,
+            current_dt=current_dt,
+            current_price=current_price,
+            bucket_step=bucket_step,
+            source_label=source_label,
+        )
     else:
         chip_payload = build_chip_profile_from_bars(visible_rows, bucket_step=bucket_step)
-    last_bar = chart["kline"][-1] if chart["kline"] else None
     return {
         "token": spec.token,
         "label": spec.label,

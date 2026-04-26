@@ -5,11 +5,11 @@ from .a_frontend_style import FRONTEND_STYLE
 
 HTML = (
     '<!DOCTYPE html>\n'
-    '<html lang="zh-CN" data-theme="light">\n'
+    '<html lang="zh-CN" data-theme="dark">\n'
     '<head>\n'
     '  <meta charset="UTF-8" />\n'
     '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n'
-    '  <title>复盘</title>\n'
+    '  <title>金字塔决策交易系统</title>\n'
     '  <style>\n'
     + FRONTEND_STYLE
     + '\n  </style>\n\n'
