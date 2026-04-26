@@ -6243,6 +6243,12 @@ function rldEnsureShell() {
   shell.appendChild(trainerPage);
   shell.appendChild(rldPage);
   shell.appendChild(settingsPage);
+
+  // 将全局弹窗/提示组件移动到 body，避免因父容器隐藏导致不可见
+  ["modalOverlay", "toastContainer", "tipContent", "msgHistoryModal", "bspPrompt", "settlementModal", "globalLoading"].forEach(id => {
+    const el = $(id);
+    if (el) document.body.appendChild(el);
+  });
 }
 
 function rldPopulateLevelSelect(id, value) {
