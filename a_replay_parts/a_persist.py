@@ -31,11 +31,7 @@ def save_runtime_prefs(data: dict[str, Any]) -> dict[str, Any]:
     normalized = copy.deepcopy(DEFAULT_RUNTIME_PREFS)
     if isinstance(data, dict):
         normalized.update(data)
-    with RUNTIME_PREFS_LOCK:
-        RUNTIME_PREFS_PATH.write_text(
-            json.dumps(normalized, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+    # 不再保存到本地文件，仅返回内存中的配置
     return copy.deepcopy(normalized)
 
 

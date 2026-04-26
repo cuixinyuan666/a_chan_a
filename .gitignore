@@ -1,4 +1,7 @@
 __pycache__/
-*.pyc
-*.runtime_prefs.json
+*.py[cod]
+*$py.class
+a_runtime_prefs.json
 *.json
+.vscode/
+.idea/
