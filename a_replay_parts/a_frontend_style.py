@@ -1,7 +1,7 @@
 FRONTEND_STYLE = """\
 
     :root, [data-theme="light"]{
-      --bg: #e7eaee;
+      --bg: #ffffff;
       --panel: #f7f8fa;
       --text: #101418;
       --muted: #5f6975;
@@ -40,6 +40,7 @@ FRONTEND_STYLE = """\
       --hoverText: #23425f;
       --toolboxBg: #edf1f6;
       --toolBtnBg: #e3e8ef;
+      --accent: #f0a53a;
       --accentTitle: #a16207;
       --dangerText: #b91c1c;
       --modalPanelBg: #f7f8fa;
@@ -94,6 +95,7 @@ FRONTEND_STYLE = """\
       --hoverText: #f7c97e;
       --toolboxBg: #090b0f;
       --toolBtnBg: #11151a;
+      --accent: #f0a53a;
       --accentTitle: #f1c979;
       --dangerText: #f87171;
       --modalPanelBg: #0e1013;
@@ -148,6 +150,7 @@ FRONTEND_STYLE = """\
       --hoverText: #1f5134;
       --toolboxBg: #eaf3ea;
       --toolBtnBg: #dcefdc;
+      --accent: #f0a53a;
       --accentTitle: #8f5f1d;
       --dangerText: #9b1c1c;
       --modalPanelBg: #f4faf4;

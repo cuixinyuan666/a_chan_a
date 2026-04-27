@@ -178,74 +178,74 @@ const DEFAULT_CHAN_CONFIG = {
 
 const DEFAULT_CHART_CONFIG = {
   theme: "dark",
-  crosshair: { width: 5, color: "#000000", fontSize: 16 },
-  fx: { width: 1.1, color: "#06b6d4", dashed: true },
-  fract: { widthSure: 2.2, widthUnsure: 1.6, color: "#d97706" },
-  bi: { widthSure: 3.1, widthUnsure: 2.2, color: "#f59e0b" },
-  seg: { widthSure: 4.8, widthUnsure: 3.5, color: "#059669" },
-  segseg: { widthSure: 6.0, widthUnsure: 4.6, color: "#2563eb" },
-  fractZs: { width: 1.4, color: "#b45309", enabled: true },
-  biZs: { width: 1.8, color: "#f59e0b", enabled: true },
-  segZs: { width: 2.4, color: "#059669", enabled: true },
-  segsegZs: { width: 2.8, color: "#2563eb", enabled: true },
-  candle: { width: 1.4, upColor: "#ff3b30", downColor: "#27d6dc" },
-  bspBi: { fontSize: 14, lineColor: "#94a3b8", lineWidth: 1, lineStyle: "dashed", lineDash: [5, 4] },
-  bspSeg: { fontSize: 14, lineColor: "#64748b", lineWidth: 1.1, lineStyle: "dashed", lineDash: [5, 4] },
-  bspSegseg: { fontSize: 14, lineColor: "#475569", lineWidth: 1.2, lineStyle: "dashed", lineDash: [5, 4] },
+  crosshair: { width: 5, color: "--text", fontSize: 16 },
+  fx: { width: 1.1, color: "--lineFx", dashed: true },
+  fract: { widthSure: 2.2, widthUnsure: 1.6, color: "--lineBi" },
+  bi: { widthSure: 3.1, widthUnsure: 2.2, color: "--lineBi" },
+  seg: { widthSure: 4.8, widthUnsure: 3.5, color: "--lineSeg" },
+  segseg: { widthSure: 6.0, widthUnsure: 4.6, color: "--accent" },
+  fractZs: { width: 1.4, color: "--lineBi", enabled: true },
+  biZs: { width: 1.8, color: "--lineBi", enabled: true },
+  segZs: { width: 2.4, color: "--lineSeg", enabled: true },
+  segsegZs: { width: 2.8, color: "--accent", enabled: true },
+  candle: { width: 1.4, upColor: "--candleUp", downColor: "--candleDown" },
+  bspBi: { fontSize: 14, lineColor: "--muted", lineWidth: 1, lineStyle: "dashed", lineDash: [5, 4] },
+  bspSeg: { fontSize: 14, lineColor: "--muted", lineWidth: 1.1, lineStyle: "dashed", lineDash: [5, 4] },
+  bspSegseg: { fontSize: 14, lineColor: "--muted", lineWidth: 1.2, lineStyle: "dashed", lineDash: [5, 4] },
   rhythmLine: {
     enabled: true,
     fractToBiEnabled: true,
     biToSegEnabled: true,
     segToSegsegEnabled: true,
-    group1LineColor: "#9333ea",
+    group1LineColor: "--lineFx",
     group1LineWidth: 1.2,
     group1LineStyle: "dashed",
-    group1TextColor: "#9333ea",
+    group1TextColor: "--lineFx",
     group1TextFontSize: 12,
     group1TextFontWeight: "bold",
-    group2LineColor: "#0f766e",
+    group2LineColor: "--lineBi",
     group2LineWidth: 1.6,
     group2LineStyle: "solid",
-    group2TextColor: "#0f766e",
+    group2TextColor: "--lineBi",
     group2TextFontSize: 13,
     group2TextFontWeight: "bold",
-    group3LineColor: "#2563eb",
+    group3LineColor: "--accent",
     group3LineWidth: 2.0,
     group3LineStyle: "dashed",
-    group3TextColor: "#2563eb",
+    group3TextColor: "--accent",
     group3TextFontSize: 14,
     group3TextFontWeight: "bold",
-    group4LineColor: "#ea580c",
+    group4LineColor: "--lineSeg",
     group4LineWidth: 2.4,
     group4LineStyle: "solid",
-    group4TextColor: "#ea580c",
+    group4TextColor: "--lineSeg",
     group4TextFontSize: 15,
     group4TextFontWeight: "bold",
-    group5LineColor: "#be123c",
+    group5LineColor: "--dangerText",
     group5LineWidth: 2.8,
     group5LineStyle: "dotted",
-    group5TextColor: "#be123c",
+    group5TextColor: "--dangerText",
     group5TextFontSize: 16,
     group5TextFontWeight: "bold"
   },
   rhythmHit: {
     fontSize: 14,
-    color: "#7c3aed",
-    lineColor: "#8b5cf6",
+    color: "--accent",
+    lineColor: "--accent",
     lineWidth: 1,
     lineStyle: "dashed",
     overflowLimit: 4,
-    overflowColor: "#7c3aed"
+    overflowColor: "--dangerText"
   },
   trade: {
-    buyColor: "#dc2626",
-    sellColor: "#16a34a",
-    rangeFillBuy: "#dc2626",
-    rangeFillSell: "#16a34a",
-    profitBandColor: "#f97316",
-    lossBandColor: "#0ea5e9",
-    profitColor: "#ef4444",
-    lossColor: "#22c55e",
+    buyColor: "--candleUp",
+    sellColor: "--candleDown",
+    rangeFillBuy: "--candleUp",
+    rangeFillSell: "--candleDown",
+    profitBandColor: "--lineBi",
+    lossBandColor: "--lineFx",
+    profitColor: "--candleUp",
+    lossColor: "--candleDown",
     popupFontSize: 16,
     markerFontSize: 14,
     markerFontWeight: "bold",
@@ -258,30 +258,30 @@ const DEFAULT_CHART_CONFIG = {
   tradeStatus: {
     titleFontSize: 14,
     titleFontWeight: "bold",
-    titleColor: "#0f172a",
+    titleColor: "--text",
     labelFontSize: 12,
     labelFontWeight: "normal",
-    labelColor: "#64748b",
+    labelColor: "--muted",
     valueFontSize: 13,
     valueFontWeight: "bold",
-    valueColor: "#0f172a"
+    valueColor: "--text"
   },
   chip: {
     enabled: true,
     stretchLevel: 5,
     bucketStep: 0.1,
-    color: "rgba(59,130,246,0.45)",
+    color: "--chipFill",
     peakLineEnabled: true,
     peakRefMode: "latest_visible",
-    peakLineColor: "#2563eb",
+    peakLineColor: "--accent",
     peakLineWidth: 1.2,
     peakLineStyle: "dashed"
   },
   xAxis: { fontSize: 12, rotation: -45, fontWeight: "normal", interval: 10 },
   yAxis: { fontSize: 12, fontWeight: "normal", interval: 0.5 },
   toast: { fontSize: 16, fontWeight: "bold", speed: 3000 },
-  legend: { fontSize: 12, fontWeight: "normal", color: "#0f172a" },
-  userRay: { color: "#f97316", width: 1.5, dash: [8, 4], fontSize: 12 }
+  legend: { fontSize: 12, fontWeight: "normal", color: "--legendText" },
+  userRay: { color: "--accent", width: 1.5, dash: [8, 4], fontSize: 12 }
 };
 
 function deepMerge(target, source) {
@@ -4701,7 +4701,7 @@ function drawUserRays(s) {
     if (selectedDrawing && selectedDrawing.type === "ray" && selectedDrawing.index === idx) {
       ctx.save();
       ctx.setLineDash([]);
-      ctx.strokeStyle = "#2563eb";
+      ctx.strokeStyle = cssVar("--accent", "#2563eb");
       ctx.lineWidth = 2;
       ctx.strokeRect(xp - 4, yp - 4, 8, 8);
       ctx.restore();
@@ -4712,7 +4712,7 @@ function drawUserRays(s) {
       const cxp = crosshairX;
       const cyp = crosshairY;
       if (Math.abs(cyp - yp) < 8 && cxp >= xp - 10 && cxp <= xEnd + 10) {
-         ctx.fillStyle = "#ef4444";
+         ctx.fillStyle = cssVar("--danger", "#ef4444");
          ctx.font = `bold ${chartConfig.userRay.fontSize}px sans-serif`;
          ctx.fillText("双击删除射线", xp + 5, yp - 5);
       }
@@ -4779,7 +4779,7 @@ function drawUserBiRays(s, chart) {
     if (selectedDrawing && selectedDrawing.type === "biRay" && selectedDrawing.index === idx) {
       ctx.save();
       ctx.setLineDash([]);
-      ctx.strokeStyle = "#2563eb";
+      ctx.strokeStyle = cssVar("--accent", "#2563eb");
       ctx.lineWidth = 2;
       ctx.strokeRect(p1x - 4, p1y - 4, 8, 8);
       ctx.restore();
@@ -4791,7 +4791,7 @@ function drawUserBiRays(s, chart) {
         const yVal = y1 + slope * (xVal - x1);
         const yPx = s.y(yVal);
         if (Math.abs(yPx - crosshairY) < 8) {
-          ctx.fillStyle = "#ef4444";
+          ctx.fillStyle = cssVar("--danger", "#ef4444");
           ctx.font = `bold ${chartConfig.userRay.fontSize}px sans-serif`;
           ctx.fillText("双击删除射线", p1x + 5, yPx - 5);
         }
@@ -4811,7 +4811,7 @@ function drawPendingBiEndpointCircle(s) {
   ctx.save();
   ctx.beginPath();
   ctx.arc(xp, yp, 10, 0, Math.PI * 2);
-  ctx.strokeStyle = "#2563eb";
+  ctx.strokeStyle = cssVar("--accent", "#2563eb");
   ctx.lineWidth = 2;
   ctx.setLineDash([]);
   ctx.stroke();
