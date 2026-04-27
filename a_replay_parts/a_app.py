@@ -30,11 +30,12 @@ def api_init(req: InitReq):
     try:
         autype_map = {"qfq": AUTYPE.QFQ, "hfq": AUTYPE.HFQ, "none": AUTYPE.NONE}
         autype = autype_map.get(req.autype.lower(), AUTYPE.QFQ)
+        lv_list = normalize_rld_lv_list(req.lv_list) if req.lv_list else [KL_TYPE.K_DAY]
         if req.initial_cash <= 0:
             raise ValueError("初始资金必须大于0")
         code_norm = normalize_code(req.code)
 
-        APP_STATE.stepper.init(code_norm, req.begin_date, req.end_date, autype, chan_config=req.chan_config)
+        APP_STATE.stepper.init(code_norm, req.begin_date, req.end_date, autype, chan_config=req.chan_config, lv_list=lv_list)
         global APP_STOCK_NAME
         APP_STOCK_NAME = APP_STATE.stepper.stock_name
         APP_STATE.account.reset(req.initial_cash)
@@ -45,6 +46,7 @@ def api_init(req: InitReq):
             "begin_date": req.begin_date,
             "end_date": req.end_date,
             "autype": autype,
+            "lv_list": lv_list,
             "initial_cash": req.initial_cash,
             "chan_config": req.chan_config,
         }

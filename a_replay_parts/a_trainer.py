@@ -444,6 +444,7 @@ class InitReq(BaseModel):
     end_date: Optional[str] = None
     initial_cash: float = 10_000
     autype: str = "qfq"
+    lv_list: Optional[list[str]] = None
     chan_config: Optional[dict[str, Any]] = None
 
 
@@ -788,6 +789,7 @@ class AppState:
             params["end_date"],
             params["autype"],
             chan_config=params.get("chan_config"),
+            lv_list=params.get("lv_list"),
         )
         # Account reset is handled by the caller if needed (e.g. in reconfig)
         # but for back_n it should stay consistent with history.
@@ -899,6 +901,9 @@ class AppState:
             chip_summary = summarize_chip_distribution(current_data, current_price=price)
             chip_payload["buckets"] = chip_summary.pop("buckets", [])
             chip_payload["summary"] = chip_summary
+            source_text = str(chip_payload.get("source") or "未知")
+            mode_text = "分笔成交合成" if self.stepper.chip_ticks else "K线估算"
+            chip_payload["explain"] = f"来源：{source_text}；口径：以当前K线时点为截面，累积历史成交（{mode_text}）。"
 
         return {
             "ready": True,

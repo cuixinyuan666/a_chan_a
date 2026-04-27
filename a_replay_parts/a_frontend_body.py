@@ -4,6 +4,7 @@ FRONTEND_BODY = """\
     <div class="left">
       <div class="title">复盘 <span class="tip-icon" data-tip="Chan.py 缠论复盘交易系统"></span></div>
       <div id="dataSourceStatus" class="sourceStatus mono">当前数据源：未加载</div>
+      <div id="chipSourceStatus" class="sourceStatus mono">筹码来源：未加载</div>
       <div id="leftContent" class="leftContent">
       <div id="chartToolsPanel" class="chartToolsPanel">
         <button id="btnFullscreen" class="fullscreen-btn" data-tip="切换图表区域全屏显示。">
@@ -41,6 +42,19 @@ FRONTEND_BODY = """\
             <option value="none">不复权</option>
           </select>
           <span class="tip-icon" data-tip="选择K线数据的复权方式。"></span>
+        </div>
+        <div class="row cfg-editable">
+          <label>周期</label>
+          <select id="period">
+            <option value="day">日线</option>
+            <option value="week">周线</option>
+            <option value="60m">60分钟</option>
+            <option value="30m">30分钟</option>
+            <option value="15m">15分钟</option>
+            <option value="5m">5分钟</option>
+            <option value="1m">1分钟</option>
+          </select>
+          <span class="tip-icon" data-tip="复盘主图周期（会影响缠论结构与步进节奏）。"></span>
         </div>
         <div class="btnRow">
           <button id="btnInit" data-tip="根据当前代码、日期区间、初始资金加载复盘会话。首次加载历史数据可能较慢。">加载会话 <small>(Ctrl+I)</small></button>

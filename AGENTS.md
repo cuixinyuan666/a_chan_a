@@ -1,3 +1,13 @@
+---
+description: 
+alwaysApply: true
+---
+
+---
+description: 
+alwaysApply: true
+---
+
 # AGENTS.md
 
 ## Setup
@@ -23,3 +33,4 @@ pip install -r Script/requirements.txt
 
 ## Run Tests
 No test framework configured.
+不改不是以a_开头的文件夹或文档，新增文件使用a_开头。

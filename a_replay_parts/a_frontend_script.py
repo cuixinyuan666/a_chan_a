@@ -362,6 +362,7 @@ const DEFAULT_SESSION_CONFIG = {
   end: "",
   cash: "10000",
   autype: "qfq",
+  period: "day",
   theme: "dark",
   chipEnabled: true,
   chipStretchLevel: "5",
@@ -762,6 +763,7 @@ function saveSessionConfig() {
     end: $("end").value,
     cash: $("cash").value,
     autype: $("autype").value,
+    period: $("period").value,
     theme: chartConfig.theme,
     chipEnabled: chartConfig.chip.enabled,
     chipStretchLevel: String(chartConfig.chip.stretchLevel),
@@ -781,6 +783,7 @@ function loadSessionConfig() {
   if (sessionConfig.end !== undefined) $("end").value = sessionConfig.end;
   if (sessionConfig.cash !== undefined) $("cash").value = sessionConfig.cash;
   if (sessionConfig.autype !== undefined) $("autype").value = sessionConfig.autype;
+  if (sessionConfig.period !== undefined) $("period").value = sessionConfig.period;
   if (sessionConfig.theme !== undefined) {
     chartConfig.theme = normalizeThemeMode(sessionConfig.theme);
     applyThemeFromSelect();
@@ -2369,7 +2372,7 @@ function applyThemeFromSelect() {
 
 // Indicator controls moved to modal.
 
-const IDS_SESSION_PARAMS = ["code", "begin", "end", "cash", "autype", "stepN"];
+const IDS_SESSION_PARAMS = ["code", "begin", "end", "cash", "autype", "period", "stepN"];
 IDS_SESSION_PARAMS.forEach(id => {
   const el = $(id);
   if (!el) return;
@@ -4942,6 +4945,21 @@ function updateDataSourceStatus(payload) {
   el.title = logs.join("\\n");
 }
 
+function updateChipSourceStatus(payload) {
+  const el = $("chipSourceStatus");
+  if (!el) return;
+  if (!payload || !payload.ready || !payload.chip) {
+    el.textContent = "筹码来源：未加载";
+    el.title = "";
+    return;
+  }
+  const chip = payload.chip || {};
+  const source = String(chip.source || "未知");
+  const explain = String(chip.explain || "");
+  el.textContent = `筹码来源：${source}${explain ? "（见提示）" : ""}`;
+  el.title = explain;
+}
+
 function updateCompactLayout() {
   const left = document.querySelector(".left");
   const content = $("leftContent");
@@ -4973,6 +4991,7 @@ function refreshUI(payload, options) {
   }
   setState(payload);
   updateDataSourceStatus(payload);
+  updateChipSourceStatus(payload);
   updateTradeStatusOverlay(payload);
   if (showStandaloneNotices && payload && Array.isArray(payload.rhythm_notice_hits) && payload.rhythm_notice_hits.length > 0) {
     showRhythmHitNotices(payload);
@@ -5045,6 +5064,7 @@ $("btnInit").onclick = async () => {
       end_date: $("end").value || null,
       initial_cash: Number($("cash").value),
       autype: $("autype").value,
+      lv_list: [$("period").value],
       chan_config: processedConfig
     });
     initSucceeded = true;
@@ -5059,6 +5079,7 @@ $("btnInit").onclick = async () => {
     $("end").disabled = true;
     $("cash").disabled = true;
     $("autype").disabled = true;
+    $("period").disabled = true;
     userAdjustedView = false;
     viewReady = false;
     viewYShiftRatio = 0;
@@ -5204,6 +5225,7 @@ $("btnReset").onclick = async () => {
     $("end").disabled = false;
     $("cash").disabled = false;
     $("autype").disabled = false;
+    $("period").disabled = false;
     $("configCard").classList.remove("collapsed");
   document.title = "复盘";
     activeTrade = null;
@@ -5220,6 +5242,7 @@ $("btnReset").onclick = async () => {
     clearBspPrompt();
     setState(payload);
     updateDataSourceStatus(payload);
+    updateChipSourceStatus(payload);
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     setMsg("已重置，可重新配置并加载会话。");
     requestAnimationFrame(updateCompactLayout);
