@@ -666,27 +666,27 @@ FRONTEND_EXT = """\
     if (!prepared) return;
     const { ctx, width, height } = prepared;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = cssVar("--bg", "#ffffff");
     ctx.fillRect(0, 0, width, height);
     const buckets = ensureArray(chip && chip.buckets, []);
     if (!chip || !chip.available || buckets.length <= 0) {
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = cssVar("--muted", "#64748b");
       ctx.font = "12px Arial";
       ctx.fillText(chip && chip.source ? `${chip.source} 暂无筹码数据` : "暂无筹码数据", 10, 18);
       return;
     }
     const maxVol = Math.max(1, ...buckets.map((item) => Number(item.volume || 0)));
     const barW = Math.max(4, (width - 28) / buckets.length);
-    ctx.fillStyle = "rgba(37,99,235,0.22)";
+    ctx.fillStyle = cssVar("--chipBg", "rgba(37,99,235,0.22)");
     ctx.fillRect(0, 0, width, height);
     buckets.forEach((item, idx) => {
       const h = Math.max(2, (Number(item.volume || 0) / maxVol) * (height - 26));
       const x = 14 + idx * barW;
       const y = height - h - 12;
-      ctx.fillStyle = "rgba(37,99,235,0.62)";
+      ctx.fillStyle = cssVar("--chipFill", "rgba(37,99,235,0.62)");
       ctx.fillRect(x, y, Math.max(2, barW - 2), h);
     });
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = cssVar("--text", "#0f172a");
     ctx.font = "11px Arial";
     ctx.fillText(chip.source || "Chip", 10, 14);
   }
@@ -700,10 +700,10 @@ FRONTEND_EXT = """\
     if (!prepared) return;
     const { ctx, width, height } = prepared;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = cssVar("--bg", "#ffffff");
     ctx.fillRect(0, 0, width, height);
     if (!levelItem || !levelItem.chart || !Array.isArray(levelItem.chart.kline) || levelItem.chart.kline.length <= 0) {
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = cssVar("--muted", "#64748b");
       ctx.font = "12px Arial";
       ctx.fillText("暂无K线", 16, 22);
       return;
@@ -727,7 +727,7 @@ FRONTEND_EXT = """\
     const macdBaseY = padT + priceH + 12 + macdH / 2;
     const macdScale = (macdH / 2 - 8) / macdAbs;
 
-    ctx.strokeStyle = "rgba(148,163,184,0.35)";
+    ctx.strokeStyle = cssVar("--grid", "rgba(148,163,184,0.35)");
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i += 1) {
       const y = padT + (priceH / 4) * i;
@@ -736,7 +736,7 @@ FRONTEND_EXT = """\
       ctx.lineTo(width - padR, y);
       ctx.stroke();
     }
-    ctx.fillStyle = "#64748b";
+    ctx.fillStyle = cssVar("--text", "#64748b");
     ctx.font = "11px Arial";
     for (let i = 0; i <= 4; i += 1) {
       const price = maxPrice - (range / 4) * i;
@@ -791,11 +791,11 @@ FRONTEND_EXT = """\
       if (idx < 0) return;
       const x = xByIndex(idx);
       const y = item.is_buy ? yByPrice(Number(item.y)) + 15 : yByPrice(Number(item.y)) - 12;
-      ctx.fillStyle = item.is_buy ? "#b91c1c" : "#15803d";
+      ctx.fillStyle = item.is_buy ? cssVar("--candleUp", "#b91c1c") : cssVar("--candleDown", "#15803d");
       ctx.font = "bold 11px Arial";
       ctx.fillText(item.display_label || item.label || "", x - 10, y);
     });
-    ctx.strokeStyle = "rgba(100,116,139,0.35)";
+    ctx.strokeStyle = cssVar("--grid", "rgba(100,116,139,0.35)");
     ctx.beginPath();
     ctx.moveTo(padL, macdBaseY);
     ctx.lineTo(width - padR, macdBaseY);
@@ -815,13 +815,13 @@ FRONTEND_EXT = """\
       const idx = ks.findIndex((item) => Number(item.x) === Number(selectedK.x));
       const x = xByIndex(Math.max(0, idx));
       ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = "#0f172a";
+      ctx.strokeStyle = cssVar("--text", "#0f172a");
       ctx.beginPath();
       ctx.moveTo(x, padT);
       ctx.lineTo(x, height - padB);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "#0f172a";
+      ctx.fillStyle = cssVar("--accentTitle", "#0f172a");
       ctx.font = "11px Arial";
       ctx.fillText(String(selectedK.t), Math.max(padL, x - 40), height - 6);
     }
@@ -1241,8 +1241,8 @@ FRONTEND_EXT = """\
       }
       .terminalMenuRoot:hover,
       .terminalMenuRoot.active {
-        background: #2b2f36;
-        color: #f7c97e;
+        background: var(--hoverBg);
+        color: var(--hoverText);
       }
       #terminalMenuHost {
         position: absolute;
@@ -1252,9 +1252,9 @@ FRONTEND_EXT = """\
       }
       .terminalMenuPanel {
         min-width: 220px;
-        border: 1px solid #3a3f46;
-        background: #171a1f;
-        box-shadow: 8px 10px 0 rgba(0, 0, 0, 0.35);
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: 8px 10px 0 rgba(0, 0, 0, 0.15);
       }
       .terminalMenuItem,
       .terminalMenuSep {
@@ -1264,9 +1264,9 @@ FRONTEND_EXT = """\
         width: 100%;
         padding: 7px 12px;
         border: none;
-        border-bottom: 1px solid rgba(58, 63, 70, 0.45);
+        border-bottom: 1px solid var(--border);
         background: transparent;
-        color: #d7dce2;
+        color: var(--text);
         font-size: 12px;
         text-align: left;
       }
@@ -1274,24 +1274,24 @@ FRONTEND_EXT = """\
         border-bottom: none;
       }
       .terminalMenuItem:hover {
-        background: #2b2f36;
-        color: #f7c97e;
+        background: var(--hoverBg);
+        color: var(--hoverText);
       }
       .terminalMenuSep {
         height: 1px;
-        background: #2b2f36;
+        background: var(--border);
       }
       #terminalBody {
         min-height: 0;
         display: grid;
         grid-template-columns: 44px minmax(0, 1fr) 128px;
-        background: #050608;
+        background: var(--bg);
         overflow: hidden;
       }
       #terminalRailMount {
         min-height: 0;
-        border-right: 1px solid #23272d;
-        background: #0a0c0f;
+        border-right: 1px solid var(--border);
+        background: var(--panel);
       }
       #topTabBar.terminalRail {
         display: flex;
@@ -1308,9 +1308,9 @@ FRONTEND_EXT = """\
         height: 88px;
         padding: 8px 0;
         border: none;
-        border-bottom: 1px solid #23272d;
+        border-bottom: 1px solid var(--border);
         background: transparent;
-        color: #858f9a;
+        color: var(--muted);
         writing-mode: vertical-rl;
         text-orientation: mixed;
         letter-spacing: 0.12em;
@@ -1319,14 +1319,14 @@ FRONTEND_EXT = """\
       }
       #topTabBar.terminalRail .tabButton.active,
       #topTabBar.terminalRail .tabButton:hover {
-        background: #171a1f;
-        color: #f7c97e;
-        box-shadow: inset 2px 0 0 #f0a53a;
+        background: var(--hoverBg);
+        color: var(--hoverText);
+        box-shadow: inset 2px 0 0 var(--accent);
       }
       #terminalWorkspace {
         min-height: 0;
         overflow: hidden;
-        background: #050608;
+        background: var(--bg);
       }
       #topPageShell {
         height: 100%;
@@ -1342,32 +1342,32 @@ FRONTEND_EXT = """\
         height: 100%;
         min-height: 0;
         overflow: auto;
-        background: #050608;
+        background: var(--bg);
       }
       #pageTrainer .wrap {
         height: 100%;
       }
       #pageTrainer .left {
         border-left: none;
-        border-right: 1px solid #23272d;
-        background: #0f1216;
+        border-right: 1px solid var(--border);
+        background: var(--panel);
       }
       #pageTrainer .right {
-        background: #000000;
+        background: var(--chartBg);
       }
       #pageTrainer .card,
       #pageTrainer .chartToolsPanel {
-        background: #0f1216;
-        border-color: #2b2f36;
+        background: var(--panel);
+        border-color: var(--border);
       }
       #pageTrainer #chart {
-        background: #000000;
+        background: var(--chartBg);
       }
       #terminalRightRail {
         min-height: 0;
         overflow: auto;
-        border-left: 1px solid #23272d;
-        background: #0a0c0f;
+        border-left: 1px solid var(--border);
+        background: var(--panel);
         padding: 8px 6px;
         box-sizing: border-box;
         display: flex;
@@ -1375,13 +1375,13 @@ FRONTEND_EXT = """\
         gap: 8px;
       }
       .terminalSideSection {
-        border: 1px solid #23272d;
-        background: #0f1216;
+        border: 1px solid var(--border);
+        background: var(--panel);
       }
       .terminalSideTitle {
         padding: 6px 7px;
-        border-bottom: 1px solid #23272d;
-        color: #9aa3ad;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
         font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -1402,15 +1402,15 @@ FRONTEND_EXT = """\
       }
       .terminalCycleBadge,
       .terminalInfoBadge {
-        border: 1px solid #23272d;
-        background: #13171d;
-        color: #d7dce2;
+        border: 1px solid var(--border);
+        background: var(--btn);
+        color: var(--btnText);
         text-align: center;
         box-sizing: border-box;
       }
       .terminalCycleBadge.active {
-        border-color: #f0a53a;
-        color: #f7c97e;
+        border-color: var(--accent);
+        color: var(--hoverText);
       }
       #terminalStatusBar {
         display: flex;
@@ -1418,9 +1418,9 @@ FRONTEND_EXT = """\
         justify-content: space-between;
         gap: 10px;
         padding: 0 10px;
-        background: #0b0d10;
-        border-top: 1px solid #23272d;
-        color: #9aa3ad;
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        color: var(--muted);
         font-size: 11px;
       }
       #terminalStatusLeft,
@@ -1441,17 +1441,17 @@ FRONTEND_EXT = """\
         min-height: 100%;
         padding: 10px;
         box-sizing: border-box;
-        background: #050608 !important;
+        background: var(--bg) !important;
       }
       .rldPanel,
       .trainPanel,
       .settingsHubCard,
       .settingsHubInner {
-        border: 1px solid #2b2f36 !important;
+        border: 1px solid var(--border) !important;
         border-radius: 0 !important;
-        background: #0f1216 !important;
+        background: var(--panel) !important;
         box-shadow: none !important;
-        color: #d7dce2;
+        color: var(--text);
       }
       .rldCardTitle,
       .trainHeadTitle,
@@ -1459,14 +1459,14 @@ FRONTEND_EXT = """\
       .settingsHubHead,
       .settingsHubSectionTitle,
       .trainChartTitle {
-        color: #f7c97e !important;
+        color: var(--accentTitle) !important;
       }
       .settingsHubHero,
       .rldHeaderBar,
       .trainHead {
-        border: 1px solid #2b2f36;
+        border: 1px solid var(--border);
         border-radius: 0 !important;
-        background: #11151a !important;
+        background: var(--panel) !important;
         box-shadow: none !important;
       }
       .rldMetaRow,
@@ -1476,20 +1476,20 @@ FRONTEND_EXT = """\
       .trainChartSub,
       .rldStatus,
       .trainStatusBox {
-        color: #9aa3ad !important;
+        color: var(--muted) !important;
       }
       .rldBadge {
         border-radius: 0 !important;
-        background: #1a2028 !important;
-        color: #d7dce2 !important;
+        background: var(--btn) !important;
+        color: var(--btnText) !important;
       }
       .rldBadge.buy {
-        background: rgba(255,59,48,0.18) !important;
-        color: #ff8d88 !important;
+        background: var(--candleUpFill) !important;
+        color: var(--candleUp) !important;
       }
       .rldBadge.sell {
-        background: rgba(39,214,220,0.18) !important;
-        color: #8df0f4 !important;
+        background: var(--candleDownFill) !important;
+        color: var(--candleDown) !important;
       }
       .rldSummaryGrid,
       .trainSummaryGrid,
@@ -1501,21 +1501,21 @@ FRONTEND_EXT = """\
       .rldSummaryCard,
       .trainSummaryCard,
       .sharedSettingChip {
-        border: 1px solid #23272d !important;
+        border: 1px solid var(--border) !important;
         border-radius: 0 !important;
-        background: #10141a !important;
+        background: var(--panel) !important;
         padding: 8px 10px;
       }
       .rldSummaryCard .k,
       .trainSummaryCard .k,
       .sharedSettingChip span {
-        color: #8f98a4 !important;
+        color: var(--muted) !important;
         font-size: 10px !important;
       }
       .rldSummaryCard .v,
       .trainSummaryCard .v,
       .sharedSettingChip strong {
-        color: #f4f4f5 !important;
+        color: var(--text) !important;
         font-size: 16px !important;
         font-weight: 700 !important;
       }
@@ -1527,8 +1527,8 @@ FRONTEND_EXT = """\
       }
       .rldChartCard,
       .trainChartCard {
-        border: 1px solid #23272d;
-        background: #0f1216;
+        border: 1px solid var(--border);
+        background: var(--panel);
         min-height: 0;
         padding: 8px;
         display: flex;
@@ -1937,11 +1937,11 @@ FRONTEND_EXT = """\
     if (!prepared) return;
     const { ctx, width, height } = prepared;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#090b0f";
+    ctx.fillStyle = cssVar("--bg", "#090b0f");
     ctx.fillRect(0, 0, width, height);
     const buckets = ensureArray(chip && chip.buckets, []);
     if (!chip || !chip.available || buckets.length <= 0) {
-      ctx.fillStyle = "#8f98a4";
+      ctx.fillStyle = cssVar("--muted", "#8f98a4");
       ctx.font = "11px Consolas";
       ctx.fillText(chip && chip.source ? chip.source : "暂无筹码", 8, 16);
       return;
@@ -1954,19 +1954,19 @@ FRONTEND_EXT = """\
       const span = Math.max(0.001, priceMax - priceMin || 0.001);
       return 16 + ((priceMax - price) / span) * (height - 32);
     };
-    ctx.fillStyle = "rgba(240,165,58,0.12)";
+    ctx.fillStyle = cssVar("--chipBg", "rgba(240,165,58,0.12)");
     ctx.fillRect(0, 0, width, height);
     buckets.forEach((item) => {
       const len = (Number(item.volume || 0) / maxVol) * (width - 18);
       const yTop = y(Number(item.price) + 0.025);
       const yBottom = y(Number(item.price) - 0.025);
       const barH = Math.max(1, yBottom - yTop);
-      ctx.fillStyle = "rgba(240,165,58,0.85)";
+      ctx.fillStyle = cssVar("--chipFill", "rgba(240,165,58,0.85)");
       ctx.fillRect(width - 8 - len, yTop, len, barH);
     });
     if (summary && summary.peak_price !== null && summary.peak_price !== undefined) {
       const peakY = y(Number(summary.peak_price));
-      ctx.strokeStyle = "#ff3b30";
+      ctx.strokeStyle = cssVar("--candleUp", "#ff3b30");
       ctx.setLineDash([4, 3]);
       ctx.beginPath();
       ctx.moveTo(4, peakY);
@@ -1974,7 +1974,7 @@ FRONTEND_EXT = """\
       ctx.stroke();
       ctx.setLineDash([]);
     }
-    ctx.strokeStyle = "#3a3f46";
+    ctx.strokeStyle = cssVar("--border", "#3a3f46");
     ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
   }
 
@@ -2090,15 +2090,15 @@ FRONTEND_EXT = """\
     if (!scaler) return;
     const { ctx, width, height, padL, padR, padT, priceBottom, macdH, visibleKs, x, y } = scaler;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = cssVar("--chartBg", "#000000");
     ctx.fillRect(0, 0, width, height);
     if (visibleKs.length <= 0) {
-      ctx.fillStyle = "#8f98a4";
+      ctx.fillStyle = cssVar("--muted", "#8f98a4");
       ctx.font = "12px Consolas";
       ctx.fillText("暂无K线", 12, 20);
       return;
     }
-    ctx.strokeStyle = "rgba(120, 32, 32, 0.45)";
+    ctx.strokeStyle = cssVar("--grid", "rgba(120, 32, 32, 0.45)");
     ctx.setLineDash([3, 5]);
     for (let i = 0; i < 5; i += 1) {
       const yLine = padT + ((priceBottom - padT) / 4) * i;
@@ -2108,7 +2108,7 @@ FRONTEND_EXT = """\
       ctx.stroke();
     }
     ctx.setLineDash([]);
-    ctx.fillStyle = "#ff4d4f";
+    ctx.fillStyle = cssVar("--text", "#ff4d4f");
     ctx.font = "11px Consolas";
     for (let i = 0; i < 5; i += 1) {
       const price = scaler.yMax - ((scaler.yMax - scaler.yMin) / 4) * i;
@@ -2172,7 +2172,7 @@ FRONTEND_EXT = """\
     const macdBaseY = priceBottom + 10 + macdH / 2;
     const macdAbs = Math.max(0.001, ...macdItems.map((item) => Math.abs(Number(item.macd && item.macd.macd || 0))));
     const macdScale = (macdH / 2 - 6) / macdAbs;
-    ctx.strokeStyle = "#3a3f46";
+    ctx.strokeStyle = cssVar("--border", "#3a3f46");
     ctx.beginPath();
     ctx.moveTo(padL, macdBaseY);
     ctx.lineTo(width - padR, macdBaseY);
@@ -2180,7 +2180,7 @@ FRONTEND_EXT = """\
     macdItems.forEach((item) => {
       const xPos = x(item.x);
       const val = Number(item.macd && item.macd.macd || 0);
-      ctx.strokeStyle = val >= 0 ? "#ff3b30" : "#27d6dc";
+      ctx.strokeStyle = val >= 0 ? cssVar("--candleUp", "#ff3b30") : cssVar("--candleDown", "#27d6dc");
       ctx.beginPath();
       ctx.moveTo(xPos, macdBaseY);
       ctx.lineTo(xPos, macdBaseY - val * macdScale);
@@ -2190,13 +2190,13 @@ FRONTEND_EXT = """\
     if (selectedK) {
       const crossX = x(selectedK.x);
       ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = "#d7dce2";
+      ctx.strokeStyle = cssVar("--text", "#d7dce2");
       ctx.beginPath();
       ctx.moveTo(crossX, padT);
       ctx.lineTo(crossX, height - 18);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "#f7c97e";
+      ctx.fillStyle = cssVar("--accentTitle", "#f7c97e");
       ctx.font = "11px Consolas";
       ctx.fillText(String(selectedK.t), Math.max(padL, crossX - 56), height - 4);
     }
