@@ -1,27 +1,5 @@
 from .a_trainer import *
 
-class ReplayMultiLvChan(CChan):
-    def __init__(self, *args: Any, replay_klus_map_master: Optional[dict[KL_TYPE, list]] = None, **kwargs: Any) -> None:
-        self._replay_klus_map_master: Optional[dict[KL_TYPE, list]] = replay_klus_map_master
-        super().__init__(*args, **kwargs)
-
-    def load(self, step: bool = False):
-        if self._replay_klus_map_master is None:
-            yield from super().load(step)
-            return
-        frozen_map = {lv: copy.deepcopy(self._replay_klus_map_master.get(lv, [])) for lv in self.lv_list}
-        self.klu_cache = [None for _ in self.lv_list]
-        self.klu_last_t = [CTime(1980, 1, 1, 0, 0) for _ in self.lv_list]
-        for lv_idx, lv in enumerate(self.lv_list):
-            self.add_lv_iter(lv_idx, iter(frozen_map.get(lv, [])))
-        yield from self.load_iterator(lv_idx=0, parent_klu=None, step=step)
-        if not step:
-            for lv in self.lv_list:
-                self.kl_datas[lv].cal_seg_and_zs()
-        if len(self[0]) == 0:
-            raise CChanException("最高级别没有获得任何数据", ErrCode.NO_DATA)
-
-
 class _SingleLevelChanView:
     def __init__(self, kl_list, conf: CChanConfig):
         self._kl_list = kl_list

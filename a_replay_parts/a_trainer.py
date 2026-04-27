@@ -68,6 +68,18 @@ class PaperAccount:
         return self.cash + self.position * price
 
 
+class DataSourceSelection(NamedTuple):
+    data_src: Any
+    label: str
+    logs: list[str]
+    replay_klus_map: dict[KL_TYPE, list]
+    kline_all: list[dict[str, Any]]
+    stock_name: Optional[str]
+    lv_list: list[KL_TYPE]
+    chip_info: Optional[dict[str, Any]] = None
+    chip_ticks: list[dict[str, Any]] = []
+
+
 class ChanStepper:
     def __init__(self) -> None:
         self.chan: Optional[CChan] = None
@@ -78,6 +90,7 @@ class ChanStepper:
         self.effective_cfg_dict: dict[str, Any] = {}
         # Full history K-lines (used by chip distribution).
         self.kline_all: list[dict[str, Any]] = []
+        self.chip_ticks: list[dict[str, Any]] = [] # 缓存的分笔数据
         self.indicators = {
             "macd": CMACD(),
             "kdj": KDJ(),
@@ -89,35 +102,56 @@ class ChanStepper:
         self.trend_lines = []
         # 会话级行情缓存：同一股票代码与日期区间下只拉取一次，缠论/BSP 配置变更时仅重算结构。
         self._data_session_key: Optional[tuple[Any, ...]] = None
-        self._replay_klus_master: Optional[list] = None
+        self._replay_klus_map_master: Optional[dict[KL_TYPE, list]] = None
         self.data_src_used: Any = None
         self.data_src_logs: list[str] = []
         self.stock_name: Optional[str] = None
         self.structure_bundle: Optional[ChanStructureBundle] = None
         self._bundle_cache_step_idx: Optional[int] = None
+        self.lv_list: list[KL_TYPE] = [KL_TYPE.K_DAY]
+        self.chip_info: Optional[dict[str, Any]] = None
 
     def _cfg_without_chan_algo(self, cfg_dict: dict[str, Any]) -> dict[str, Any]:
         return {k: v for k, v in cfg_dict.items() if k != "chan_algo"}
 
-    def _fetch_from_single_source(
+    def _fetch_chip_distribution(
         self,
-        data_src: Any,
         begin_date: str,
         end_date: Optional[str],
         autype: AUTYPE,
-        chan_cfg_dict: dict[str, Any],
-    ) -> tuple[list, list[dict[str, Any]], Optional[str]]:
-        selection = select_runtime_data_source_for_level(
-            code=self.code,
-            begin_date=begin_date,
-            end_date=end_date,
-            autype=autype,
-            lv=KL_TYPE.K_DAY,
-        )
-        replay_klus_master = selection.items
-        stock_name = selection.stock_name
+        kline_fallback: list,
+    ) -> tuple[Optional[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+        """根据配置获取筹码分布：优先 Tick 合成，失败则回退 K 线估算。"""
+        settings = get_shared_settings()
+        quality = str(settings.get("chip_data_quality") or "kline_estimate").lower()
+        
+        # 1. 尝试 Tick 合成
+        if quality in {"offline_tick", "network_tick"}:
+            try:
+                # 筹码通常需要较长历史，begin_date 设为 1990
+                tick_rows, tick_label = fetch_tick_trades_cached(
+                    mode=quality,
+                    code=self.code,
+                    begin_date="1990-01-01",
+                    end_date=end_date,
+                    default_root=Path(settings.get("offline_tick_path", "")),
+                )
+                if tick_rows:
+                    # 初始状态：只合成训练开始前的筹码
+                    pre_ticks = [t for t in tick_rows if t["time"] < begin_date]
+                    chip_summary = summarize_chip_distribution(pre_ticks)
+                    return {
+                        "available": True,
+                        "source": tick_label,
+                        "summary": chip_summary,
+                    }, [], tick_rows
+            except Exception as e:
+                print(f"[Chip] Tick fetch failed: {e}")
+
+        # 2. 回退 K 线估算 (KLineChip)
         chip_begin_date = "1990-01-01"
         try:
+            # 尽量使用 K 线数据源链中最高优先级的源
             chip_selection = select_runtime_data_source_for_level(
                 code=self.code,
                 begin_date=chip_begin_date,
@@ -126,42 +160,22 @@ class ChanStepper:
                 lv=KL_TYPE.K_DAY,
             )
             kline_all = serialize_klu_iter(chip_selection.items)
+            pre_klines = [k for k in kline_all if k["t"] < begin_date]
+            chip_summary = summarize_chip_distribution(pre_klines)
+            return {
+                "available": True,
+                "source": f"KLine({chip_selection.label})",
+                "summary": chip_summary,
+            }, kline_all, []
         except Exception:
-            kline_all = serialize_klu_iter(replay_klus_master)
-        return replay_klus_master, kline_all, stock_name
-
-    def _select_data_source_with_fallback(
-        self,
-        begin_date: str,
-        end_date: Optional[str],
-        autype: AUTYPE,
-        chan_cfg_dict: dict[str, Any],
-    ) -> DataSourceSelection:
-        logs: list[str] = []
-        errors: list[str] = []
-        for idx, (label, data_src) in enumerate(get_data_source_chain()):
-            print(f"[DataSource] try {label} for {self.code} {begin_date} -> {end_date or 'latest'}")
-            try:
-                replay_klus_master, kline_all, stock_name = self._fetch_from_single_source(data_src, begin_date, end_date, autype, chan_cfg_dict)
-                if idx == 0:
-                    logs.append(f"数据源已连接：{label}")
-                else:
-                    logs.append(f"数据源切换成功：{label}（前序源不可用，已自动降级）")
-                print(f"[DataSource] selected {label}")
-                return DataSourceSelection(
-                    data_src=data_src,
-                    label=label,
-                    logs=logs + errors,
-                    replay_klus_master=replay_klus_master,
-                    kline_all=kline_all,
-                    stock_name=stock_name,
-                )
-            except Exception as exc:
-                detail = format_source_error(exc)
-                errors.append(f"{label} 失败：{detail}")
-                logs.append(f"数据源尝试失败：{label}")
-                print(f"[DataSource] failed {label}: {detail}")
-        raise RuntimeError("全部数据源均不可用：" + "；".join(errors))
+            kline_all = serialize_klu_iter(kline_fallback)
+            pre_klines = [k for k in kline_all if k["t"] < begin_date]
+            chip_summary = summarize_chip_distribution(pre_klines)
+            return {
+                "available": True,
+                "source": "KLine(Fallback)",
+                "summary": chip_summary,
+            }, kline_all, []
 
     def _select_runtime_data_source_with_fallback(
         self,
@@ -169,28 +183,70 @@ class ChanStepper:
         end_date: Optional[str],
         autype: AUTYPE,
         chan_cfg_dict: dict[str, Any],
+        lv_list: list[KL_TYPE],
     ) -> DataSourceSelection:
+        replay_klus_map: dict[KL_TYPE, list] = {}
+        logs: list[str] = []
+        stock_name: Optional[str] = None
+        valid_lv_list: list[KL_TYPE] = []
+        
+        # 1. 确定主数据源（以最高级别为准）
+        primary_lv = lv_list[0]
         selection = select_runtime_data_source_for_level(
             code=self.code,
             begin_date=begin_date,
             end_date=end_date,
             autype=autype,
-            lv=KL_TYPE.K_DAY,
+            lv=primary_lv,
         )
-        replay_klus_master, kline_all, stock_name = self._fetch_from_single_source(
-            selection.data_src,
-            begin_date,
-            end_date,
-            autype,
-            chan_cfg_dict,
+        data_src = selection.data_src
+        label = selection.label
+        logs.extend(selection.logs)
+        stock_name = selection.stock_name
+        
+        # 2. 依次加载各级别，尽量保持数据源一致
+        for lv in lv_list:
+            if lv == primary_lv:
+                replay_klus_map[lv] = selection.items
+                valid_lv_list.append(lv)
+                continue
+            try:
+                # 尝试使用主数据源直接获取
+                lv_selection = select_runtime_data_source_for_level(
+                    code=self.code,
+                    begin_date=begin_date,
+                    end_date=end_date,
+                    autype=autype,
+                    lv=lv,
+                    preferred_src=data_src,
+                )
+                replay_klus_map[lv] = lv_selection.items
+                valid_lv_list.append(lv)
+                if stock_name is None:
+                    stock_name = lv_selection.stock_name
+            except Exception as exc:
+                logs.append(f"{kl_type_to_label(lv)} 加载失败: {format_source_error(exc)}")
+                if lv == primary_lv:
+                    raise
+        
+        # 3. 获取筹码分布
+        chip_info, kline_all, chip_ticks = self._fetch_chip_distribution(
+            begin_date=begin_date,
+            end_date=end_date,
+            autype=autype,
+            kline_fallback=replay_klus_map.get(primary_lv, []),
         )
+
         return DataSourceSelection(
-            data_src=selection.data_src,
-            label=selection.label,
-            logs=list(selection.logs),
-            replay_klus_master=replay_klus_master,
+            data_src=data_src,
+            label=label,
+            logs=logs,
+            replay_klus_map=replay_klus_map,
             kline_all=kline_all,
             stock_name=stock_name,
+            lv_list=valid_lv_list,
+            chip_info=chip_info,
+            chip_ticks=chip_ticks,
         )
 
     def get_structure_bundle(self, *, force: bool = False, chan: Optional[CChan] = None) -> ChanStructureBundle:
@@ -206,7 +262,10 @@ class ChanStepper:
             self.trend_lines = list(bundle.trend_lines)
         return bundle
 
-    def init(self, code: str, begin_date: str, end_date: Optional[str], autype: AUTYPE, chan_config: Optional[dict[str, Any]] = None) -> None:
+    def init(self, code: str, begin_date: str, end_date: Optional[str], autype: AUTYPE, chan_config: Optional[dict[str, Any]] = None, lv_list: Optional[list[KL_TYPE]] = None) -> None:
+        if lv_list is None:
+            lv_list = [KL_TYPE.K_DAY]
+        self.lv_list = lv_list
         cfg_dict = {
             "chan_algo": CHAN_ALGO_CLASSIC,
             "bi_strict": True,
@@ -275,31 +334,34 @@ class ChanStepper:
         cfg = CChanConfig(chan_cfg_dict)
         self.code = normalize_code(code)
         self.stock_name = None
-        session_key = (self.code, begin_date, end_date, autype)
-        cache_hit = session_key == self._data_session_key and self._replay_klus_master is not None
+        session_key = (self.code, begin_date, end_date, autype, tuple(self.lv_list))
+        cache_hit = session_key == self._data_session_key and self._replay_klus_map_master is not None
 
         if not cache_hit:
-            selection = self._select_runtime_data_source_with_fallback(begin_date, end_date, autype, chan_cfg_dict)
-            self._replay_klus_master = selection.replay_klus_master
+            selection = self._select_runtime_data_source_with_fallback(begin_date, end_date, autype, chan_cfg_dict, self.lv_list)
+            self._replay_klus_map_master = selection.replay_klus_map
             self.kline_all = selection.kline_all
             self.data_src_used = selection.data_src
             self.data_src_logs = list(selection.logs)
             self._data_session_key = session_key
+            self.lv_list = selection.lv_list
+            self.chip_info = selection.chip_info
+            self.chip_ticks = selection.chip_ticks
             if selection.stock_name:
                 self.stock_name = selection.stock_name
         else:
             if self.data_src_logs:
                 self.data_src_logs = [f"沿用已缓存数据源：{data_source_label(self.data_src_used)}"]
 
-        self.chan = ReplayChan(
+        self.chan = ReplayMultiLvChan(
             code=self.code,
             begin_time=begin_date,
             end_time=end_date,
             data_src=self.data_src_used or DATA_SRC.BAO_STOCK,
-            lv_list=[KL_TYPE.K_DAY],
+            lv_list=self.lv_list,
             config=cfg,
             autype=autype,
-            replay_klus_master=self._replay_klus_master,
+            replay_klus_map_master=self._replay_klus_map_master,
         )
         self._iter = self.chan.step_load()
         self.step_idx = -1
@@ -324,7 +386,7 @@ class ChanStepper:
             self.structure_bundle = None
             self._bundle_cache_step_idx = None
             # Update indicators
-            kl_list = self.chan[0]
+            kl_list = self.chan[self.lv_list[0]]
             latest_klu = kl_list.lst[-1].lst[-1]
             h, l, c = float(latest_klu.high), float(latest_klu.low), float(latest_klu.close)
             
@@ -465,20 +527,20 @@ class AppState:
         self._reset_judge_state()
         if self.session_params is None:
             return
-        if self.stepper._replay_klus_master is None:
+        if self.stepper._replay_klus_map_master is None:
             return
         cfg_dict = (self.stepper.effective_cfg_dict or {}).copy()
         cfg_dict["trigger_step"] = False
         cfg = CChanConfig(self.stepper._cfg_without_chan_algo(cfg_dict))
-        chan_all = ReplayChan(
+        chan_all = ReplayMultiLvChan(
             code=self.stepper.code,
             begin_time=self.session_params["begin_date"],
             end_time=self.session_params["end_date"],
             data_src=self.stepper.data_src_used or DATA_SRC.BAO_STOCK,
-            lv_list=[KL_TYPE.K_DAY],
+            lv_list=self.stepper.lv_list,
             config=cfg,
             autype=self.session_params["autype"],
-            replay_klus_master=self.stepper._replay_klus_master,
+            replay_klus_map_master=self.stepper._replay_klus_map_master,
         )
         # 强制全量加载一次，生成笔/线段/中枢/买卖点
         for _ in chan_all.load(step=False):
@@ -791,17 +853,53 @@ class AppState:
         rhythm_notice_hits = list(self._rhythm_notice_hits)
         self._rhythm_notice_hits = []
         bundle = self.stepper.get_structure_bundle()
-        chart = serialize_chan(
-            self.stepper.chan,
-            self.stepper.indicator_history,
-            self.stepper.trend_lines,
-            chan_algo=self.stepper.chan_algo,
-            bundle=bundle,
-            kline_all=self.stepper.kline_all,
-        )
+        
+        # 多周期支持：返回所有周期的图表数据
+        levels_payload = []
+        for lv in self.stepper.lv_list:
+            chart = serialize_chan(
+                self.stepper.chan,
+                self.stepper.indicator_history if lv == self.stepper.lv_list[0] else [], # 仅主周期带指标历史
+                self.stepper.trend_lines if lv == self.stepper.lv_list[0] else [],
+                chan_algo=self.stepper.chan_algo,
+                bundle=bundle,
+                kline_all=self.stepper.kline_all if lv == self.stepper.lv_list[0] else [],
+                lv=lv,
+            )
+            levels_payload.append({
+                "level": kl_type_to_name(lv),
+                "label": kl_type_to_label(lv),
+                "chart": chart,
+            })
+
         price: Optional[float] = None
-        if len(chart.get("kline", [])) > 0:
+        main_chart = levels_payload[0]["chart"]
+        if len(main_chart.get("kline", [])) > 0:
             price = self.stepper.current_price()
+
+        # 筹码分布合成结果
+        chip_payload = {
+            "available": False,
+            "source": "None",
+            "buckets": [],
+            "summary": {},
+        }
+        if self.stepper.chip_info:
+            chip_payload.update(self.stepper.chip_info)
+            current_time = self.stepper.current_time()
+            
+            # 动态合成：从全量数据中筛选出截止到当前时间的数据
+            if self.stepper.chip_ticks:
+                # 优先使用缓存的分笔数据
+                current_data = [t for t in self.stepper.chip_ticks if t["time"] <= current_time]
+            else:
+                # 回退到使用全量 K 线数据估算
+                current_data = [k for k in self.stepper.kline_all if k["t"] <= current_time]
+            
+            chip_summary = summarize_chip_distribution(current_data, current_price=price)
+            chip_payload["buckets"] = chip_summary.pop("buckets", [])
+            chip_payload["summary"] = chip_summary
+
         return {
             "ready": True,
             "finished": self.finished,
@@ -815,7 +913,9 @@ class AppState:
             "step_idx": self.stepper.step_idx,
             "time": self.stepper.current_time(),
             "price": price,
-            "chart": chart,
+            "levels": levels_payload,
+            "chart": main_chart, # 保持兼容
+            "chip": chip_payload,
             "bsp_history": self.bsp_history,
             "rhythm_notice_hits": rhythm_notice_hits,
             "judge_notice": bool(self._judge_notice),
@@ -829,7 +929,37 @@ class AppState:
                 "can_sell": bool(price is not None and self.account.can_sell(self.stepper.step_idx)),
             },
             "trades": self._build_trade_state(),
+            "timeline": self._build_timeline(levels_payload),
         }
+
+    def _build_timeline(self, levels_payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """构建训练历史时间线。"""
+        # 以主周期为准
+        if not levels_payload:
+            return []
+        main_level = levels_payload[0]
+        chart = main_level.get("chart") or {}
+        kline = chart.get("kline") or []
+        if not kline:
+            return []
+            
+        # 提取最近 20 条记录作为时间线
+        timeline = []
+        for k in reversed(kline[-20:]):
+            # 获取该 K 线对应的指标和买卖点信息
+            # 这里简化处理，直接从 chart 中获取当前状态
+            # 实际上可能需要更复杂的历史追溯，但目前先满足基本显示
+            item = {
+                "label": main_level.get("label"),
+                "time": k.get("t"),
+                "price": k.get("c"),
+                "trend": chart.get("summary", {}).get("trend_label", "-"),
+                "bsp": chart.get("summary", {}).get("latest_bsp", {}).get("display_label", "-"),
+                "chdl": chart.get("summary", {}).get("chdl_score"),
+                "macd": chart.get("summary", {}).get("macd_bias"),
+            }
+            timeline.append(item)
+        return timeline
 
 
 def serialize_klu_iter(klu_iter) -> list[dict[str, Any]]:
@@ -857,8 +987,9 @@ def serialize_chan(
     chan_algo: str = CHAN_ALGO_CLASSIC,
     bundle: Optional[ChanStructureBundle] = None,
     kline_all: Optional[list[dict[str, Any]]] = None,
+    lv: KL_TYPE = KL_TYPE.K_DAY,
 ) -> dict[str, Any]:
-    kl_list = chan[0]
+    kl_list = chan[lv]
     klu_arr = serialize_klu_iter(kl_list.klu_iter())
     active_bundle = bundle or build_structure_bundle(chan, chan_algo)
     fract_arr = serialize_line_collection(active_bundle.fract_list)

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import RLock
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, NamedTuple
 
 import akshare as ak
 import pandas as pd
@@ -64,6 +64,7 @@ from .a_data_extra import (
     normalize_kl_type_name,
     resolve_override_path,
     set_shared_settings,
+    summarize_chip_distribution,
 )
 from .a_persist import read_runtime_pref, write_runtime_pref
 
@@ -83,10 +84,32 @@ class ReplayChan(CChan):
         if self._replay_klus_master is None:
             yield from super().load(step)
             return
-        frozen = copy.deepcopy(self._replay_klus_master)
+        # 重置并喂入缓存的 K 线
         self.klu_cache = [None for _ in self.lv_list]
         self.klu_last_t = [CTime(1980, 1, 1, 0, 0) for _ in self.lv_list]
-        self.add_lv_iter(0, iter(frozen))
+        self.add_lv_iter(0, iter(copy.deepcopy(self._replay_klus_master)))
+        yield from self.load_iterator(lv_idx=0, parent_klu=None, step=step)
+        if not step:
+            for lv in self.lv_list:
+                self.kl_datas[lv].cal_seg_and_zs()
+        if len(self[0]) == 0:
+            raise CChanException("最高级别没有获得任何数据", ErrCode.NO_DATA)
+
+
+class ReplayMultiLvChan(CChan):
+    def __init__(self, *args: Any, replay_klus_map_master: Optional[dict[KL_TYPE, list]] = None, **kwargs: Any) -> None:
+        self._replay_klus_map_master: Optional[dict[KL_TYPE, list]] = replay_klus_map_master
+        super().__init__(*args, **kwargs)
+
+    def load(self, step: bool = False):
+        if self._replay_klus_map_master is None:
+            yield from super().load(step)
+            return
+        frozen_map = {lv: copy.deepcopy(self._replay_klus_map_master.get(lv, [])) for lv in self.lv_list}
+        self.klu_cache = [None for _ in self.lv_list]
+        self.klu_last_t = [CTime(1980, 1, 1, 0, 0) for _ in self.lv_list]
+        for lv_idx, lv in enumerate(self.lv_list):
+            self.add_lv_iter(lv_idx, iter(frozen_map.get(lv, [])))
         yield from self.load_iterator(lv_idx=0, parent_klu=None, step=step)
         if not step:
             for lv in self.lv_list:
@@ -587,12 +610,25 @@ def runtime_fetch_base_level(target_lv: KL_TYPE, mode: Optional[str] = None) -> 
 
 
 def get_runtime_data_source_chain() -> list[tuple[str, Any]]:
+    with DATA_SOURCE_PRIORITY_LOCK:
+        user_priority = list(DATA_SOURCE_PRIORITY)
+    
+    # 获取原始链
+    base_chain = list(get_data_source_chain())
+    
+    # 根据用户设置的优先级进行排序
+    # user_priority 包含 label 列表，如 ["OfflineTXT", "BaoStock", ...]
+    priority_map = {label: idx for idx, label in enumerate(user_priority)}
+    
+    # 按照优先级排序，未在列表中的排在最后
+    base_chain.sort(key=lambda item: priority_map.get(item[0], 999))
+    
     shared = get_shared_settings()
-    chain = list(get_data_source_chain())
+    # 如果设置了强制离线模式，则进一步将 OfflineTXT 置顶（如果它不在首位）
     if str(shared.get("data_quality") or "").lower().startswith("offline"):
-        current_order = {label: idx for idx, (label, _) in enumerate(chain)}
-        chain.sort(key=lambda item: (0 if item[0] == "OfflineTXT" else 1, current_order.get(item[0], 999)))
-    return chain
+        base_chain.sort(key=lambda item: (0 if item[0] == "OfflineTXT" else 1, priority_map.get(item[0], 999)))
+        
+    return base_chain
 
 
 def _runtime_level_fetch_cache_key(
@@ -601,6 +637,8 @@ def _runtime_level_fetch_cache_key(
     end_date: Optional[str],
     autype: AUTYPE,
     lv: KL_TYPE,
+    *,
+    preferred_src: Any = None,
 ) -> tuple[Any, ...]:
     shared = get_shared_settings()
     source_chain = [label for label, _ in get_runtime_data_source_chain()]
@@ -609,6 +647,7 @@ def _runtime_level_fetch_cache_key(
         str(shared.get("data_quality") or "network_direct"),
         str(shared.get("offline_kline_path") or ""),
         tuple(source_chain),
+        str(preferred_src),
         _strip_market_prefix(code),
         str(begin_date or ""),
         str(end_date or ""),
@@ -623,8 +662,10 @@ def select_runtime_data_source_for_level(
     end_date: Optional[str],
     autype: AUTYPE,
     lv: KL_TYPE,
+    *,
+    preferred_src: Any = None,
 ) -> RuntimeLevelSelection:
-    cache_key = _runtime_level_fetch_cache_key(code, begin_date, end_date, autype, lv)
+    cache_key = _runtime_level_fetch_cache_key(code, begin_date, end_date, autype, lv, preferred_src=preferred_src)
     with RUNTIME_LEVEL_FETCH_CACHE_LOCK:
         cached = RUNTIME_LEVEL_FETCH_CACHE.get(cache_key)
     if cached is not None:
@@ -643,7 +684,14 @@ def select_runtime_data_source_for_level(
     fetch_lv = runtime_fetch_base_level(lv, mode)
     errors: list[str] = []
     logs: list[str] = [f"取数策略：{mode}"]
-    for label, data_src in get_runtime_data_source_chain():
+
+    chain = get_runtime_data_source_chain()
+    if preferred_src is not None:
+        # 将首选源置于链顶
+        pref_label = data_source_label(preferred_src)
+        chain = [(pref_label, preferred_src)] + [item for item in chain if item[1] != preferred_src]
+
+    for label, data_src in chain:
         if not data_source_supports_level(data_src, fetch_lv):
             errors.append(f"{label}:不支持{normalize_kl_type_name(fetch_lv)}")
             continue

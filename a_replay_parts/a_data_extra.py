@@ -877,13 +877,18 @@ def summarize_chip_distribution(
     *,
     current_price: Optional[float] = None,
 ) -> dict[str, Any]:
-    rows = []
+    # 聚合逻辑：将相近的价格合并到 bucket 中以减少前端负担
+    price_volume_map: dict[float, float] = {}
     for item in buckets or []:
         price = safe_float(item.get("price"), float("nan"))
         volume = safe_float(item.get("volume"), 0.0)
         if not math.isfinite(price) or volume <= 0:
             continue
-        rows.append({"price": round(price, 4), "volume": float(volume)})
+        # 价格保留 2 位小数作为 bucket 键
+        key = round(price, 2)
+        price_volume_map[key] = price_volume_map.get(key, 0.0) + float(volume)
+
+    rows = [{"price": p, "volume": v} for p, v in price_volume_map.items()]
     rows.sort(key=lambda item: item["price"])
     empty_band = {"low": None, "high": None}
     if not rows:
@@ -937,6 +942,7 @@ def summarize_chip_distribution(
         "benefit_ratio": round(benefit_ratio, 4) if benefit_ratio is not None else None,
         "band70": tightest_band(0.7),
         "band90": tightest_band(0.9),
+        "buckets": rows,
     }
 
 

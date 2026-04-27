@@ -654,6 +654,7 @@ FRONTEND_EXT = """\
       `当前时间：${payload.time}`,
       `周期：${ensureArray(payload.levels, []).map((item) => item.label).join(" / ")}`,
       `数据源：${payload.data_source ? payload.data_source.label : "-"}`,
+      `筹码源：${payload.chip ? payload.chip.source : "-"}`,
       `尝试顺序：${getSourcePriorityHint()}`,
       ...(payload.data_source && payload.data_source.logs ? payload.data_source.logs : []),
     ];
@@ -827,7 +828,8 @@ FRONTEND_EXT = """\
     }
   }
 
-  function trainHoverHtml(levelItem, k) {
+  function trainHoverHtml(levelItem, k, chip) {
+    const chipSummary = chip && chip.summary || {};
     return `
       <div><strong>${levelItem.label}</strong></div>
       <div>时间：${k ? k.t : "-"}</div>
@@ -837,6 +839,8 @@ FRONTEND_EXT = """\
       <div>中枢：${levelItem.summary ? `${levelItem.summary.zs_state.kind}${levelItem.summary.zs_state.label}` : "-"}</div>
       <div>CHDL：${levelItem.summary ? rldNumber(levelItem.summary.chdl_score) : "-"}</div>
       <div>MACD：${levelItem.summary ? rldNumber(levelItem.summary.macd_bias) : "-"}</div>
+      ${chipSummary.avg_cost ? `<div>筹码均价：${rldNumber(chipSummary.avg_cost, 2)}</div>` : ""}
+      ${chipSummary.benefit_ratio ? `<div>获利比例：${(chipSummary.benefit_ratio * 100).toFixed(1)}%</div>` : ""}
     `;
   }
 
@@ -871,13 +875,14 @@ FRONTEND_EXT = """\
     `).join("");
     levels.forEach((levelItem, idx) => {
       drawTrainChart($("trainChartCanvas" + (idx + 1)), levelItem);
-      drawTrainChip($("trainChipCanvas" + (idx + 1)), levelItem.chip);
+      drawTrainChip($("trainChipCanvas" + (idx + 1)), levelItem.chip || payload.chip);
       const hoverEl = $("trainHover" + (idx + 1));
       const canvas = $("trainChartCanvas" + (idx + 1));
       if (!canvas || !hoverEl) return;
       const chart = levelItem.chart || {};
       const ks = ensureArray(chart.kline, []);
-      if (ks.length > 0) hoverEl.innerHTML = trainHoverHtml(levelItem, ks[ks.length - 1]);
+      const currentChip = levelItem.chip || payload.chip;
+      if (ks.length > 0) hoverEl.innerHTML = trainHoverHtml(levelItem, ks[ks.length - 1], currentChip);
       hoverEl.onmouseenter = () => {
         hoverEl.dataset.locked = "1";
         hoverEl.classList.add("visible");
@@ -893,7 +898,7 @@ FRONTEND_EXT = """\
         const idx2 = Math.max(0, Math.min(ks.length - 1, Math.round(((x - 56) / Math.max(1, rect.width - 70)) * (ks.length - 1))));
         const k = ks[idx2];
         rldTrainCrosshair[levelItem.token] = k.t;
-        hoverEl.innerHTML = trainHoverHtml(levelItem, k);
+        hoverEl.innerHTML = trainHoverHtml(levelItem, k, currentChip);
         hoverEl.classList.add("visible");
         drawTrainChart(canvas, levelItem);
       };
