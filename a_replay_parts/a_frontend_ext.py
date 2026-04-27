@@ -1083,13 +1083,7 @@ FRONTEND_EXT = """\
     {
       label: "文件(F)",
       items: [
-        { label: "加载复盘会话", action: () => clickUi("btnInit") },
-        { label: "加载融立德工作台", action: () => clickUi("rldBtnInit") },
-        { label: "加载缠论训练", action: () => clickUi("trainBtnInit") },
-        { separator: true },
-        { label: "重置复盘", action: () => clickUi("btnReset") },
-        { label: "重置融立德", action: () => clickUi("rldBtnReset") },
-        { label: "退出", action: () => clickUi("btnExit") },
+        { label: "离线数据", submenu: "offlineData" },
       ],
     },
     {
@@ -1131,6 +1125,16 @@ FRONTEND_EXT = """\
   const terminalViewState = Object.create(null);
   let terminalShellPatched = false;
   let terminalMenuOpenRoot = null;
+  let offlineDataSubMenu = null;
+  let offlineKlineSubMenu = null;
+  let offlineTickSubMenu = null;
+  const OFFLINE_KLINE_PERIODS = [
+    { value: "1MINUTE", label: "1分钟" },
+    { value: "5MINUTE", label: "5分钟" },
+    { value: "DAY", label: "日线" },
+    { value: "WEEK", label: "周线" },
+    { value: "MONTH", label: "月线" },
+  ];
 
   function clickUi(id) {
     const el = $(id);
@@ -1249,12 +1253,19 @@ FRONTEND_EXT = """\
         top: 100%;
         left: 0;
         z-index: 125;
+        display: flex;
+        align-items: flex-start;
       }
       .terminalMenuPanel {
         min-width: 220px;
         border: 1px solid var(--border);
         background: var(--panel);
         box-shadow: 8px 10px 0 rgba(0, 0, 0, 0.15);
+        position: relative;
+      }
+      .terminalMenuItem.active {
+        background: var(--hoverBg);
+        color: var(--hoverText);
       }
       .terminalMenuItem,
       .terminalMenuSep {
@@ -1276,6 +1287,22 @@ FRONTEND_EXT = """\
       .terminalMenuItem:hover {
         background: var(--hoverBg);
         color: var(--hoverText);
+      }
+      .terminalMenuItem.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .menuArrow {
+        float: right;
+        font-size: 10px;
+        color: #666;
+        margin-left: 8px;
+      }
+      .terminalMenuLoading {
+        padding: 12px;
+        color: #888;
+        font-size: 12px;
+        text-align: center;
       }
       .terminalMenuSep {
         height: 1px;
@@ -1734,35 +1761,285 @@ FRONTEND_EXT = """\
     document.head.appendChild(style);
   }
 
+  function ensureMenuLevel(level, parentBtn) {
+    const host = $("terminalMenuHost");
+    if (!host) return null;
+    const panels = host.querySelectorAll(".terminalMenuPanel");
+    for (let i = panels.length - 1; i >= level; i -= 1) {
+      panels[i].remove();
+    }
+    const currentPanels = host.querySelectorAll(".terminalMenuPanel");
+    if (level > 0 && currentPanels[level - 1] && parentBtn) {
+      currentPanels[level - 1].querySelectorAll(".terminalMenuItem").forEach((el) => el.classList.remove("active"));
+      parentBtn.classList.add("active");
+    }
+    const panel = document.createElement("div");
+    panel.className = "terminalMenuPanel";
+    if (level > 0 && parentBtn) {
+      panel.style.marginTop = `${parentBtn.offsetTop}px`;
+    }
+    host.appendChild(panel);
+    return panel;
+  }
+
   function renderTerminalMenuPanels() {
     const host = $("terminalMenuHost");
     const bar = $("terminalMenuBar");
     if (!host || !bar) return;
-    if (!terminalMenuOpenRoot) {
+    if (terminalMenuOpenRoot === null) {
       host.innerHTML = "";
       bar.querySelectorAll(".terminalMenuRoot").forEach((btn) => btn.classList.remove("active"));
       return;
     }
     const def = TERMINAL_MENU_DEFS[terminalMenuOpenRoot];
     if (!def) return;
-    host.innerHTML = `
-      <div class="terminalMenuPanel">
-        ${def.items.map((item, idx) => item.separator
-          ? '<div class="terminalMenuSep"></div>'
-          : `<button class="terminalMenuItem" type="button" data-terminal-menu-item="${terminalMenuOpenRoot}:${idx}">${item.label}</button>`
-        ).join("")}
-      </div>
+    const panel = ensureMenuLevel(0, null);
+    panel.innerHTML = `
+      ${def.items.map((item, idx) => item.separator
+        ? '<div class="terminalMenuSep"></div>'
+        : `<button class="terminalMenuItem" type="button" data-terminal-menu-item="${terminalMenuOpenRoot}:${idx}">${item.label}${item.submenu ? '<span class="menuArrow">▶</span>' : ''}</button>`
+      ).join("")}
     `;
     bar.querySelectorAll(".terminalMenuRoot").forEach((btn, idx) => btn.classList.toggle("active", idx === terminalMenuOpenRoot));
-    host.querySelectorAll("[data-terminal-menu-item]").forEach((btn) => {
-      btn.onclick = () => {
-        const [rootIdx, itemIdx] = String(btn.getAttribute("data-terminal-menu-item") || "").split(":").map((x) => Number(x));
-        const item = TERMINAL_MENU_DEFS[rootIdx] && TERMINAL_MENU_DEFS[rootIdx].items[itemIdx];
+    panel.querySelectorAll("[data-terminal-menu-item]").forEach((btn) => {
+      const [rootIdx, itemIdx] = String(btn.getAttribute("data-terminal-menu-item") || "").split(":").map((x) => Number(x));
+      const item = TERMINAL_MENU_DEFS[rootIdx] && TERMINAL_MENU_DEFS[rootIdx].items[itemIdx];
+
+      const handleAction = (e) => {
+        if (item && item.submenu === "offlineData") {
+          e.stopPropagation();
+          renderOfflineDataSubMenu(btn);
+          return;
+        }
         terminalMenuOpenRoot = null;
         renderTerminalMenuPanels();
         if (item && typeof item.action === "function") item.action();
       };
+
+      btn.onclick = (e) => handleAction(e);
+      const arrow = btn.querySelector(".menuArrow");
+      if (arrow) {
+        arrow.onmouseenter = (e) => {
+          if (item && item.submenu) {
+            handleAction(e);
+          }
+        };
+      }
     });
+  }
+
+  function renderOfflineDataSubMenu(parentBtn) {
+    const panel = ensureMenuLevel(1, parentBtn);
+    if (!panel) return;
+    panel.innerHTML = `
+      <button class="terminalMenuItem" type="button" data-offline-action="kline">K线<span class="menuArrow">▶</span></button>
+      <button class="terminalMenuItem" type="button" data-offline-action="tick">分笔数据<span class="menuArrow">▶</span></button>
+    `;
+    panel.querySelectorAll("[data-offline-action]").forEach((btn) => {
+      const handleAction = (e) => {
+        e.stopPropagation();
+        const action = btn.getAttribute("data-offline-action");
+        if (action === "kline") {
+          renderKlineStockList(btn);
+        } else if (action === "tick") {
+          renderTickStockList(btn);
+        }
+      };
+      btn.onclick = handleAction;
+      const arrow = btn.querySelector(".menuArrow");
+      if (arrow) {
+        arrow.onmouseenter = handleAction;
+      }
+    });
+  }
+
+  async function renderKlineStockList(parentBtn) {
+    const panel = ensureMenuLevel(2, parentBtn);
+    if (!panel) return;
+    panel.innerHTML = `<div class="terminalMenuLoading">加载中...</div>`;
+    try {
+      const resp = await api("/api/offline/stocks", null, "GET");
+      const stocks = ensureArray(resp && resp.stocks, []);
+      if (stocks.length === 0) {
+        panel.innerHTML = `<div class="terminalMenuItem disabled">暂无股票数据</div>`;
+        return;
+      }
+      stocks.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      panel.innerHTML = `
+        ${stocks.map((stock) => `<button class="terminalMenuItem" type="button" data-stock="${stock}">${stock}<span class="menuArrow">▶</span></button>`).join("")}
+      `;
+      panel.querySelectorAll("[data-stock]").forEach((btn) => {
+        const handleAction = (e) => {
+          e.stopPropagation();
+          const stock = btn.getAttribute("data-stock");
+          renderKlinePeriodList(stock, btn);
+        };
+        btn.onclick = handleAction;
+        const arrow = btn.querySelector(".menuArrow");
+        if (arrow) {
+          arrow.onmouseenter = handleAction;
+        }
+      });
+    } catch (e) {
+      panel.innerHTML = `<div class="terminalMenuItem disabled">加载失败</div>`;
+    }
+  }
+
+  async function renderKlinePeriodList(stock, parentBtn) {
+    const panel = ensureMenuLevel(3, parentBtn);
+    if (!panel) return;
+    panel.innerHTML = `<div class="terminalMenuLoading">加载中...</div>`;
+    try {
+      const resp = await api(`/api/offline/kline/periods?stock=${encodeURIComponent(stock)}`, null, "GET");
+      const periods = ensureArray(resp && resp.periods, []);
+      const allPeriods = OFFLINE_KLINE_PERIODS;
+      panel.innerHTML = `
+        ${allPeriods.map((p) => {
+          const hasData = periods.includes(p.value);
+          return `<button class="terminalMenuItem ${!hasData ? 'disabled' : ''}" type="button" data-stock="${stock}" data-period="${p.value}" ${!hasData ? 'disabled' : ''}>${p.label}</button>`;
+        }).join("")}
+      `;
+      panel.querySelectorAll("[data-stock][data-period]:not([disabled])").forEach((btn) => {
+        const handleAction = (e) => {
+          e.stopPropagation();
+          const s = btn.getAttribute("data-stock");
+          const p = btn.getAttribute("data-period");
+          showKlineDataTable(s, p);
+        };
+        btn.onclick = handleAction;
+      });
+    } catch (e) {
+      panel.innerHTML = `<div class="terminalMenuItem disabled">加载失败</div>`;
+    }
+  }
+
+  async function renderTickStockList(parentBtn) {
+    const panel = ensureMenuLevel(2, parentBtn);
+    if (!panel) return;
+    panel.innerHTML = `<div class="terminalMenuLoading">加载中...</div>`;
+    try {
+      const resp = await api("/api/offline/stocks", null, "GET");
+      const stocks = ensureArray(resp && resp.stocks, []);
+      if (stocks.length === 0) {
+        panel.innerHTML = `<div class="terminalMenuItem disabled">暂无股票数据</div>`;
+        return;
+      }
+      stocks.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      panel.innerHTML = `
+        ${stocks.map((stock) => `<button class="terminalMenuItem" type="button" data-stock="${stock}">${stock}<span class="menuArrow">▶</span></button>`).join("")}
+      `;
+      panel.querySelectorAll("[data-stock]").forEach((btn) => {
+        const handleAction = (e) => {
+          e.stopPropagation();
+          const stock = btn.getAttribute("data-stock");
+          renderTickDateList(stock, btn);
+        };
+        btn.onclick = handleAction;
+        const arrow = btn.querySelector(".menuArrow");
+        if (arrow) {
+          arrow.onmouseenter = handleAction;
+        }
+      });
+    } catch (e) {
+      panel.innerHTML = `<div class="terminalMenuItem disabled">加载失败</div>`;
+    }
+  }
+
+  async function renderTickDateList(stock, parentBtn) {
+    const panel = ensureMenuLevel(3, parentBtn);
+    if (!panel) return;
+    panel.innerHTML = `<div class="terminalMenuLoading">加载中...</div>`;
+    try {
+      const resp = await api(`/api/offline/tick/dates?stock=${encodeURIComponent(stock)}`, null, "GET");
+      const dates = ensureArray(resp && resp.dates, []);
+      if (dates.length === 0) {
+        panel.innerHTML = `<div class="terminalMenuItem disabled">暂无分笔数据</div>`;
+        return;
+      }
+      dates.sort((a, b) => a.localeCompare(b));
+      panel.innerHTML = `
+        ${dates.map((date) => `<button class="terminalMenuItem" type="button" data-stock="${stock}" data-date="${date}">${date}</button>`).join("")}
+      `;
+      panel.querySelectorAll("[data-stock][data-date]").forEach((btn) => {
+        const handleAction = (e) => {
+          e.stopPropagation();
+          const s = btn.getAttribute("data-stock");
+          const d = btn.getAttribute("data-date");
+          showTickDataTable(s, d);
+        };
+        btn.onclick = handleAction;
+      });
+    } catch (e) {
+      panel.innerHTML = `<div class="terminalMenuItem disabled">加载失败</div>`;
+    }
+  }
+
+  async function showKlineDataTable(stock, period) {
+    terminalMenuOpenRoot = null;
+    renderTerminalMenuPanels();
+    try {
+      const resp = await api(`/api/offline/kline/data?stock=${encodeURIComponent(stock)}&period=${encodeURIComponent(period)}`, null, "GET");
+      const columns = ensureArray(resp && resp.columns, []);
+      const data = ensureArray(resp && resp.data, []);
+      const periodLabel = OFFLINE_KLINE_PERIODS.find((p) => p.value === period) ? OFFLINE_KLINE_PERIODS.find((p) => p.value === period).label : period;
+      showOfflineDataModal(`${stock} - ${periodLabel}`, columns, data);
+    } catch (e) {
+      showToast(`加载K线数据失败：${e.message}`, { record: false });
+    }
+  }
+
+  async function showTickDataTable(stock, date) {
+    terminalMenuOpenRoot = null;
+    renderTerminalMenuPanels();
+    try {
+      const resp = await api(`/api/offline/tick/data?stock=${encodeURIComponent(stock)}&date=${encodeURIComponent(date)}`, null, "GET");
+      const columns = ensureArray(resp && resp.columns, []);
+      const data = ensureArray(resp && resp.data, []);
+      showOfflineDataModal(`${stock} - ${date}`, columns, data);
+    } catch (e) {
+      showToast(`加载分笔数据失败：${e.message}`, { record: false });
+    }
+  }
+
+  function showOfflineDataModal(title, columns, data) {
+    closeOfflineDataModal();
+    const overlay = document.createElement("div");
+    overlay.id = "offlineDataModalOverlay";
+    overlay.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;";
+    const container = document.createElement("div");
+    container.style.cssText = "background:#1a1d23;border-radius:8px;max-width:90vw;max-height:80vh;min-width:600px;display:flex;flex-direction:column;";
+    const header = document.createElement("div");
+    header.style.cssText = "padding:12px 16px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;";
+    header.innerHTML = `<span style="color:#fff;font-size:14px;font-weight:bold;">${title}</span><button id="offlineDataModalClose" style="background:none;border:none;color:#999;cursor:pointer;font-size:20px;line-height:1;">×</button>`;
+    const tableWrapper = document.createElement("div");
+    tableWrapper.style.cssText = "overflow:auto;flex:1;padding:8px;";
+    const table = document.createElement("table");
+    table.style.cssText = "border-collapse:collapse;width:100%;font-size:12px;";
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>${columns.map((col) => `<th style="padding:8px;background:#252a33;color:#c4c9d4;border:1px solid #333;text-align:left;white-space:nowrap;">${col}</th>`).join("")}</tr>`;
+    const tbody = document.createElement("tbody");
+    const maxRows = 500;
+    const displayData = data.slice(0, maxRows);
+    tbody.innerHTML = displayData.map((row) => `<tr>${(Array.isArray(row) ? row : Object.values(row)).map((cell) => `<td style="padding:6px 8px;color:#e0e3e7;border:1px solid #2a2f3a;white-space:nowrap;">${cell}</td>`).join("")}</tr>`).join("");
+    if (data.length > maxRows) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="${columns.length}" style="padding:8px;color:#888;text-align:center;">显示前 ${maxRows} 条，共 ${data.length} 条</td>`;
+      tbody.appendChild(tr);
+    }
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    tableWrapper.appendChild(table);
+    container.appendChild(header);
+    container.appendChild(tableWrapper);
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
+    $("offlineDataModalClose").onclick = closeOfflineDataModal;
+    overlay.onclick = (e) => { if (e.target === overlay) closeOfflineDataModal(); };
+  }
+
+  function closeOfflineDataModal() {
+    const overlay = $("offlineDataModalOverlay");
+    if (overlay) overlay.remove();
   }
 
   function ensureTerminalShell() {
@@ -1824,7 +2101,7 @@ FRONTEND_EXT = """\
       $("terminalMaxBtn").onclick = () => clickUi("btnFullscreen");
       $("terminalCloseBtn").onclick = () => clickUi("btnExit");
       document.addEventListener("click", (e) => {
-        if (!terminalMenuOpenRoot) return;
+        if (terminalMenuOpenRoot === null) return;
         const target = e.target;
         if (target && (target.closest("#terminalMenuBar") || target.closest("#terminalMenuHost"))) return;
         terminalMenuOpenRoot = null;
@@ -1839,11 +2116,17 @@ FRONTEND_EXT = """\
     if (bar && bar.dataset.bound !== "1") {
       bar.dataset.bound = "1";
       bar.querySelectorAll(".terminalMenuRoot").forEach((btn) => {
+        const idx = Number(btn.getAttribute("data-terminal-root") || 0);
         btn.onclick = (e) => {
           e.stopPropagation();
-          const idx = Number(btn.getAttribute("data-terminal-root") || 0);
           terminalMenuOpenRoot = terminalMenuOpenRoot === idx ? null : idx;
           renderTerminalMenuPanels();
+        };
+        btn.onmouseenter = () => {
+          if (terminalMenuOpenRoot !== idx) {
+            terminalMenuOpenRoot = idx;
+            renderTerminalMenuPanels();
+          }
         };
       });
     }

@@ -387,6 +387,120 @@ def api_exit():
     os.kill(os.getpid(), signal.SIGTERM)
     return {"message": "Server is exiting..."}
 
+@app.get("/api/offline/stocks")
+def api_offline_stocks():
+    import os
+    import glob
+    base_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "a_Data")
+    if not os.path.exists(base_dir):
+        return {"stocks": []}
+    stocks = []
+    for entry in os.listdir(base_dir):
+        entry_path = os.path.join(base_dir, entry)
+        if os.path.isdir(entry_path) and entry.startswith(("SZ#", "SH#")):
+            stocks.append(entry)
+    stocks.sort()
+    return {"stocks": stocks}
+
+@app.get("/api/offline/kline/periods")
+def api_offline_kline_periods(stock: str):
+    import os
+    import glob
+    base_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "a_Data", stock, "KLine")
+    if not os.path.exists(base_dir):
+        return {"periods": []}
+    all_periods = ["1MINUTE", "5MINUTE", "DAY", "WEEK", "MONTH"]
+    available_periods = []
+    for period in all_periods:
+        period_path = os.path.join(base_dir, period)
+        if os.path.exists(period_path):
+            pattern = os.path.join(period_path, f"{stock}.txt")
+            if glob.glob(pattern):
+                available_periods.append(period)
+    return {"periods": available_periods}
+
+@app.get("/api/offline/kline/data")
+def api_offline_kline_data(stock: str, period: str):
+    import os
+    import pandas as pd
+    from io import StringIO
+    file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "a_Data", stock, "KLine", period, f"{stock}.txt")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="K线数据文件不存在")
+    try:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except UnicodeDecodeError:
+            with open(file_path, "r", encoding="gbk") as f:
+                lines = f.readlines()
+        if len(lines) < 2:
+            return {"columns": [], "data": [], "message": "数据文件为空"}
+        header_parts = lines[0].strip().split()
+        col_count = len(header_parts)
+        columns = ["日期", "时间", "开盘", "最高", "最低", "收盘", "成交量", "成交额"]
+        data_rows = []
+        for line in lines[1:]:
+            parts = line.strip().split()
+            if len(parts) >= col_count:
+                data_rows.append(parts[:col_count])
+        df = pd.DataFrame(data_rows, columns=columns[:col_count])
+        return {"columns": columns[:col_count], "data": df.values.tolist(), "stock": stock, "period": period}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/offline/tick/dates")
+def api_offline_tick_dates(stock: str):
+    import os
+    import glob
+    base_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "a_Data", stock, "TickData")
+    if not os.path.exists(base_dir):
+        return {"dates": []}
+    pattern = os.path.join(base_dir, f"*_{stock.replace('SZ#', '').replace('SH#', '')}.txt")
+    files = glob.glob(pattern)
+    dates = []
+    for f in files:
+        basename = os.path.basename(f)
+        parts = basename.split("_")
+        if len(parts) >= 1:
+            date_part = parts[0]
+            if len(date_part) == 8 and date_part.isdigit():
+                dates.append(date_part)
+    dates.sort(reverse=True)
+    return {"dates": dates}
+
+@app.get("/api/offline/tick/data")
+def api_offline_tick_data(stock: str, date: str):
+    import os
+    import pandas as pd
+    stock_code = stock.replace("SZ#", "").replace("SH#", "")
+    file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "a_Data", stock, "TickData", f"{date}_{stock_code}.txt")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="分笔数据文件不存在")
+    try:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except UnicodeDecodeError:
+            with open(file_path, "r", encoding="gbk") as f:
+                lines = f.readlines()
+        if len(lines) < 2:
+            return {"columns": [], "data": [], "message": "数据文件为空"}
+        columns = ["时间", "价格", "成交量", "成交额", "买卖标记"]
+        data_rows = []
+        for line in lines[1:]:
+            parts = line.strip().split()
+            if len(parts) >= 4:
+                row = parts[:4]
+                if len(parts) > 4:
+                    row.append(parts[4])
+                else:
+                    row.append("")
+                data_rows.append(row)
+        return {"columns": columns, "data": data_rows, "stock": stock, "date": date}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 def run_dev_server() -> None:
     import socket
     import subprocess
